@@ -14,6 +14,7 @@ Part of the "Open" set of libraries.</Description>
     <Version>1.0.1</Version>
     <AssemblyVersion>1.0.0.1</AssemblyVersion>
     <FileVersion>1.0.0.1</FileVersion>
+    <PackageTags>dotnet, dotnetcore, cs, collections, extensions, threadsafe, thread-safe, readwrite, read-write, readerwriterlock, readerwriterlockslim</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
