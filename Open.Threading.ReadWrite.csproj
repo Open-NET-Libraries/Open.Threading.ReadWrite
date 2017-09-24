@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp1.1</TargetFramework>
+    <RootNamespace>Open.Threading</RootNamespace>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Authors>electricessence</Authors>
+    <Company />
+    <Product />
+    <PackageLicenseUrl>https://github.com/electricessence/Open/blob/master/LICENSE</PackageLicenseUrl>
+    <Description>Useful set of extensions and classes for simplifying and optimizing read-write synchronization.
+
+Part of the "Open" set of libraries.</Description>
+    <Version>1.0.1</Version>
+    <AssemblyVersion>1.0.0.1</AssemblyVersion>
+    <FileVersion>1.0.0.1</FileVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Open.Diagnostics" Version="1.0.1" />
+    <PackageReference Include="Open.Disposable" Version="1.0.0" />
+  </ItemGroup>
+
+</Project>
