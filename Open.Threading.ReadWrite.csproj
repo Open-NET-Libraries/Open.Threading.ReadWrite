@@ -23,7 +23,7 @@ Part of the "Open" set of libraries.</Description>
 
   <ItemGroup>
     <PackageReference Include="Open.Diagnostics" Version="1.0.1" />
-    <PackageReference Include="Open.Disposable" Version="1.0.2" />
+    <PackageReference Include="Open.Disposable" Version="1.0.4" />
   </ItemGroup>
 
 </Project>
