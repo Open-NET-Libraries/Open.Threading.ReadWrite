@@ -23,7 +23,7 @@ namespace Open.Threading
 
 		private class ReaderWriterLockTracker : DisposableBase
 		{
-			readonly List<object> _registry = new List<object>();
+			readonly HashSet<object> _registry = new HashSet<object>();
 
 			internal ReaderWriterLockSlim Lock;
 
@@ -43,15 +43,17 @@ namespace Open.Threading
 					return false;
 
 				lock (_registry)
-					_registry.Add(context);
-
-				return true;
+				{
+					return _registry.Add(context);
+				}
 			}
 
 			public void Clear(object context)
 			{
 				lock (_registry)
+				{
 					_registry.Remove(context);
+				}
 			}
 
 			public bool CanDispose
@@ -59,7 +61,9 @@ namespace Open.Threading
 				get
 				{
 					lock (_registry)
-						return !_registry.Any();
+					{
+						return _registry.Count==0;
+					}
 				}
 			}
 
@@ -80,8 +84,8 @@ namespace Open.Threading
 		}
 
 
-		readonly ConcurrentBag<object> ContextPool = new ConcurrentBag<object>();
-		readonly ConcurrentBag<ReaderWriterLockTracker> LockPool = new ConcurrentBag<ReaderWriterLockTracker>();
+		readonly ConcurrentQueue<object> ContextPool = new ConcurrentQueue<object>();
+		readonly ConcurrentQueue<ReaderWriterLockTracker> LockPool = new ConcurrentQueue<ReaderWriterLockTracker>();
 
 		readonly ConcurrentDictionary<TKey, ReaderWriterLockTracker> Locks
 			= new ConcurrentDictionary<TKey, ReaderWriterLockTracker>();
@@ -136,7 +140,7 @@ namespace Open.Threading
 					   {
 						   result = Locks.GetOrAdd(key, k =>
 						   {
-							   if (!LockPool.TryTake(out created))
+							   if (!LockPool.TryDequeue(out created))
 							   {
 								   created = new ReaderWriterLockTracker(RecursionPolicy);
 								   if (Debugger.IsAttached)
@@ -155,7 +159,7 @@ namespace Open.Threading
 						   if (IsDisposed)
 							   created.Dispose();
 						   else
-							   LockPool.Add(created);
+							   LockPool.Enqueue(created);
 					   }
 
 					   // This should never get out of sync, but just in case...
@@ -282,7 +286,7 @@ namespace Open.Threading
 				throw new ArgumentNullException("closure");
 			ReaderWriterLockSlimExensions.ValidateMillisecondsTimeout(millisecondsTimeout);
 
-            if (!ContextPool.TryTake(out object context) || context == null)
+            if (!ContextPool.TryDequeue(out object context) || context == null)
                 context = new Object();
 
             ReaderWriterLockTracker rwlock = GetLock(key, type, context, millisecondsTimeout, throwsOnTimeout);
@@ -299,7 +303,7 @@ namespace Open.Threading
 				{
 					ReleaseLock(rwlock.Lock, type);
 					rwlock.Clear(context);
-					ContextPool.Add(context);
+					ContextPool.Enqueue(context);
 				}
 				catch (Exception ex)
 				{
@@ -661,7 +665,7 @@ namespace Open.Threading
                                 {
                                     try
                                     {
-                                        LockPool.Add(tempLock);
+                                        LockPool.Enqueue(tempLock);
                                     }
                                     catch (ObjectDisposedException)
                                     {
@@ -685,14 +689,14 @@ namespace Open.Threading
 				CleanupDelay = Math.Max(Math.Min(1000000 / (Locks.Count + 1), 10000), 1000); // Don't allow for less than.
 		}
 
-		private void ConcurrentBagTrim<T>(ConcurrentBag<T> target, int maxCount = 0, bool dispose = false, bool allowExceptions = true)
+		private void TrimPool<T>(ConcurrentQueue<T> target, int maxCount = 0, bool dispose = false, bool allowExceptions = true)
 		{
 			if (target == null)
 				throw new ArgumentNullException("target");
             //var d = new List<IDisposable>();
             try
             {
-                while (!target.IsEmpty && target.Count > maxCount && target.TryTake(out T context))
+                while (!target.IsEmpty && target.Count > maxCount && target.TryDequeue(out T context))
                 {
                     if (dispose)
                     {
@@ -738,8 +742,8 @@ namespace Open.Threading
 				var count = Locks.Count;
 				var maxCount = Math.Min(count, 100);
 
-				ConcurrentBagTrim(ContextPool, maxCount * 2);
-				ConcurrentBagTrim(LockPool, maxCount, true);//ConcurrentQueueTrimAndDispose(LockPool, maxCount);
+				TrimPool(ContextPool, maxCount * 2);
+				TrimPool(LockPool, maxCount, true);//ConcurrentQueueTrimAndDispose(LockPool, maxCount);
 
 				if (Debugger.IsAttached && LockPool.Any(l => l.IsDisposed))
 					Debug.Fail("LockPool is retaining a disposed tracker.");
@@ -769,7 +773,7 @@ namespace Open.Threading
 
 				CleanupInternal();
 				Locks.Clear(); // Some locks may be removed, but releasing will still occur.
-				ConcurrentBagTrim(LockPool, 0, true, calledExplicitly);
+				TrimPool(LockPool, 0, true, calledExplicitly);
 
 			}, calledExplicitly ? 1000 : 0); // We don't want to block for any reason for too long.
 											 // Dispose shouldn't be called without this being able to be cleaned.
@@ -785,9 +789,9 @@ namespace Open.Threading
 
 			Locks.Clear();
 
-			ConcurrentBagTrim(ContextPool, 0, false, calledExplicitly);
+			TrimPool(ContextPool, 0, false, calledExplicitly);
 			if (!lockHeld)
-				ConcurrentBagTrim(LockPool, 0, true, calledExplicitly);
+				TrimPool(LockPool, 0, true, calledExplicitly);
 
 			if (calledExplicitly && Debugger.IsAttached)
 			{
