@@ -9,24 +9,24 @@ using System.Threading;
 
 namespace Open.Threading
 {
-    public abstract class LockBase<TSync> : IDisposable
-        where TSync : class
-    {
-        protected TSync _target;
-        public readonly bool LockHeld;
+	public abstract class LockBase<TSync> : IDisposable
+		where TSync : class
+	{
+		protected TSync _target;
+		public readonly bool LockHeld;
 
-        protected LockBase(TSync target, bool lockHeld)
-        {
-            LockHeld = lockHeld;
-            if (lockHeld)
-               _target = target;        
-        }
-        protected abstract void OnDispose(TSync target);
+		protected LockBase(TSync target, bool lockHeld)
+		{
+			LockHeld = lockHeld;
+			if (lockHeld)
+				_target = target;
+		}
+		protected abstract void OnDispose(TSync target);
 
-        public void Dispose()
-        {
-            OnDispose(Interlocked.Exchange(ref _target, null));
-        }
-    }
+		public void Dispose()
+		{
+			OnDispose(Interlocked.Exchange(ref _target, null));
+		}
+	}
 
 }

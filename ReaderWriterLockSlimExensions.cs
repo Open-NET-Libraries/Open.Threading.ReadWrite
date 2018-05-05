@@ -5,6 +5,7 @@
  */
 
 using System;
+using System.Diagnostics.Contracts;
 using System.Threading;
 
 namespace Open.Threading
@@ -13,15 +14,16 @@ namespace Open.Threading
 	public static class ReaderWriterLockSlimExensions
 	{
 
-        /// <summary>
-        /// Extension for checking lock status... Should only be used for debugging.
-        /// </summary>
-        /// <param name="target"></param>
-        /// <returns></returns>
+		/// <summary>
+		/// Extension for checking lock status... Should only be used for debugging.
+		/// </summary>
+		/// <param name="target"></param>
+		/// <returns></returns>
 		public static bool IsLockFree(this ReaderWriterLockSlim target)
 		{
 			if (target == null)
 				throw new NullReferenceException();
+			Contract.EndContractBlock();
 
 			return target.CurrentReadCount == 0
 				&& target.RecursiveReadCount == 0
@@ -39,7 +41,7 @@ namespace Open.Threading
 		internal static void ValidateMillisecondsTimeout(int? millisecondsTimeout)
 		{
 			if ((millisecondsTimeout ?? 0) < 0)
-				throw new ArgumentOutOfRangeException("millisecondsTimeout", millisecondsTimeout, "Cannot be a negative value.");
+				throw new ArgumentOutOfRangeException(nameof(millisecondsTimeout), millisecondsTimeout, "Cannot be a negative value.");
 		}
 
 
@@ -53,16 +55,17 @@ namespace Open.Threading
 			if (target == null)
 				throw new NullReferenceException();
 			ValidateMillisecondsTimeout(millisecondsTimeout);
+			Contract.EndContractBlock();
 
 			if (millisecondsTimeout == null)
 				target.EnterReadLock();
 			else if (!target.TryEnterReadLock(millisecondsTimeout.Value))
 			{
 				if (throwsOnTimeout)
-                    throw new TimeoutException(String.Format(
-                        "Could not acquire a read lock within the timeout specified. (millisecondsTimeout={0})", millisecondsTimeout));
+					throw new TimeoutException(String.Format(
+						"Could not acquire a read lock within the timeout specified. (millisecondsTimeout={0})", millisecondsTimeout));
 
-                return false;
+				return false;
 			}
 
 			return true;
@@ -78,14 +81,15 @@ namespace Open.Threading
 			if (target == null)
 				throw new NullReferenceException();
 			ValidateMillisecondsTimeout(millisecondsTimeout);
+			Contract.EndContractBlock();
 
 			if (millisecondsTimeout == null)
 				target.EnterUpgradeableReadLock();
 			else if (!target.TryEnterUpgradeableReadLock(millisecondsTimeout.Value))
 			{
 				if (throwsOnTimeout)
-                    throw new TimeoutException(String.Format(
-                        "Could not acquire an upgradeable read lock within the timeout specified. (millisecondsTimeout={0})", millisecondsTimeout));
+					throw new TimeoutException(String.Format(
+						"Could not acquire an upgradeable read lock within the timeout specified. (millisecondsTimeout={0})", millisecondsTimeout));
 
 				return false;
 			}
@@ -103,14 +107,15 @@ namespace Open.Threading
 			if (target == null)
 				throw new NullReferenceException();
 			ValidateMillisecondsTimeout(millisecondsTimeout);
+			Contract.EndContractBlock();
 
 			if (millisecondsTimeout == null)
 				target.EnterWriteLock();
 			else if (!target.TryEnterWriteLock(millisecondsTimeout.Value))
 			{
 				if (throwsOnTimeout)
-                    throw new TimeoutException(String.Format(
-                        "Could not acquire a write lock within the timeout specified. (millisecondsTimeout={0})", millisecondsTimeout));
+					throw new TimeoutException(String.Format(
+						"Could not acquire a write lock within the timeout specified. (millisecondsTimeout={0})", millisecondsTimeout));
 
 				return false;
 			}
@@ -133,8 +138,9 @@ namespace Open.Threading
 			if (target == null)
 				throw new NullReferenceException();
 			if (closure == null)
-				throw new ArgumentNullException("closure");
+				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
+			Contract.EndContractBlock();
 
 			bool lockHeld = false;
 			try
@@ -151,37 +157,37 @@ namespace Open.Threading
 			return lockHeld;
 		}
 
-        /// <summary>
-        /// Generates a disposable ReadLock object for encapsulating code within a using(){} statement.
-        /// </summary>
-        /// <param name="target">The ReaderWriterLockSlim instance.</param>
-        /// <param name="millisecondsTimeout">Optional timeout value.  If timeout is exceeded, an exception is thrown.</param>
-        /// <returns>The ReadLock disposable.</returns>
+		/// <summary>
+		/// Generates a disposable ReadLock object for encapsulating code within a using(){} statement.
+		/// </summary>
+		/// <param name="target">The ReaderWriterLockSlim instance.</param>
+		/// <param name="millisecondsTimeout">Optional timeout value.  If timeout is exceeded, an exception is thrown.</param>
+		/// <returns>The ReadLock disposable.</returns>
 		public static ReadLock ReadLock(this ReaderWriterLockSlim target,
 			int? millisecondsTimeout = null)
 		{
 			return new ReadLock(target, millisecondsTimeout);
 		}
 
-        /// <summary>
-        /// Generates a disposable WriteLock object for encapsulating code within a using(){} statement.
-        /// </summary>
-        /// <param name="target">The ReaderWriterLockSlim instance.</param>
-        /// <param name="millisecondsTimeout">Optional timeout value.  If timeout is exceeded, an exception is thrown.</param>
-        /// <returns>The WriteLock disposable.</returns>
-        public static WriteLock WriteLock(this ReaderWriterLockSlim target,
+		/// <summary>
+		/// Generates a disposable WriteLock object for encapsulating code within a using(){} statement.
+		/// </summary>
+		/// <param name="target">The ReaderWriterLockSlim instance.</param>
+		/// <param name="millisecondsTimeout">Optional timeout value.  If timeout is exceeded, an exception is thrown.</param>
+		/// <returns>The WriteLock disposable.</returns>
+		public static WriteLock WriteLock(this ReaderWriterLockSlim target,
 			int? millisecondsTimeout = null)
 		{
 			return new WriteLock(target, millisecondsTimeout);
 		}
 
-        /// <summary>
-        /// Generates a disposable UpgradableReadLock object for encapsulating code within a using(){} statement.
-        /// </summary>
-        /// <param name="target">The ReaderWriterLockSlim instance.</param>
-        /// <param name="millisecondsTimeout">Optional timeout value.  If timeout is exceeded, an exception is thrown.</param>
-        /// <returns>The UpgradableReadLock disposable.</returns>
-        public static UpgradableReadLock UpgradableReadLock(this ReaderWriterLockSlim target,
+		/// <summary>
+		/// Generates a disposable UpgradableReadLock object for encapsulating code within a using(){} statement.
+		/// </summary>
+		/// <param name="target">The ReaderWriterLockSlim instance.</param>
+		/// <param name="millisecondsTimeout">Optional timeout value.  If timeout is exceeded, an exception is thrown.</param>
+		/// <returns>The UpgradableReadLock disposable.</returns>
+		public static UpgradableReadLock UpgradableReadLock(this ReaderWriterLockSlim target,
 			int? millisecondsTimeout = null)
 		{
 			return new UpgradableReadLock(target, millisecondsTimeout);
@@ -202,8 +208,9 @@ namespace Open.Threading
 			if (target == null)
 				throw new NullReferenceException();
 			if (closure == null)
-				throw new ArgumentNullException("closure");
+				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
+			Contract.EndContractBlock();
 
 			bool lockHeld = false;
 			try
@@ -237,8 +244,9 @@ namespace Open.Threading
 			if (target == null)
 				throw new NullReferenceException();
 			if (closure == null)
-				throw new ArgumentNullException("closure");
+				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
+			Contract.EndContractBlock();
 
 			bool lockHeld = false;
 			try
@@ -271,8 +279,9 @@ namespace Open.Threading
 			if (target == null)
 				throw new NullReferenceException();
 			if (closure == null)
-				throw new ArgumentNullException("closure");
+				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
+			Contract.EndContractBlock();
 
 			bool lockHeld = false;
 			try
@@ -305,8 +314,9 @@ namespace Open.Threading
 			if (target == null)
 				throw new NullReferenceException();
 			if (closure == null)
-				throw new ArgumentNullException("closure");
+				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
+			Contract.EndContractBlock();
 
 			bool lockHeld = false;
 			try
@@ -338,8 +348,9 @@ namespace Open.Threading
 			if (target == null)
 				throw new NullReferenceException();
 			if (closure == null)
-				throw new ArgumentNullException("closure");
+				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
+			Contract.EndContractBlock();
 
 			bool lockHeld = false;
 			try
@@ -369,10 +380,11 @@ namespace Open.Threading
 			if (target == null)
 				throw new NullReferenceException();
 			if (condition == null)
-				throw new ArgumentNullException("condition");
+				throw new ArgumentNullException(nameof(condition));
 			if (closure == null)
-				throw new ArgumentNullException("closure");
+				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
+			Contract.EndContractBlock();
 
 			var lockHeld = true;
 			if (condition(false))
@@ -402,10 +414,11 @@ namespace Open.Threading
 			if (target == null)
 				throw new NullReferenceException();
 			if (condition == null)
-				throw new ArgumentNullException("condition");
+				throw new ArgumentNullException(nameof(condition));
 			if (closure == null)
-				throw new ArgumentNullException("closure");
+				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
+			Contract.EndContractBlock();
 
 			var r = result;
 			bool lockHeld = true, written = false;
@@ -439,10 +452,11 @@ namespace Open.Threading
 			if (target == null)
 				throw new NullReferenceException();
 			if (condition == null)
-				throw new ArgumentNullException("condition");
+				throw new ArgumentNullException(nameof(condition));
 			if (closure == null)
-				throw new ArgumentNullException("closure");
+				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
+			Contract.EndContractBlock();
 
 			bool c = false;
 			var lockHeld = target.Read(() => c = condition(LockType.Read), millisecondsTimeout, throwsOnTimeout);
@@ -474,10 +488,11 @@ namespace Open.Threading
 			if (target == null)
 				throw new NullReferenceException();
 			if (condition == null)
-				throw new ArgumentNullException("condition");
+				throw new ArgumentNullException(nameof(condition));
 			if (closure == null)
-				throw new ArgumentNullException("closure");
+				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
+			Contract.EndContractBlock();
 
 			var r = result;
 			bool c = false, written = false;
@@ -514,10 +529,11 @@ namespace Open.Threading
 			if (target == null)
 				throw new NullReferenceException();
 			if (condition == null)
-				throw new ArgumentNullException("condition");
+				throw new ArgumentNullException(nameof(condition));
 			if (closure == null)
-				throw new ArgumentNullException("closure");
+				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
+			Contract.EndContractBlock();
 
 			bool writeLocked = true; // Initialize true so that if only only reading it still returns true.
 			bool readLocked = target.ReadUpgradeable(() =>
@@ -542,10 +558,11 @@ namespace Open.Threading
 			if (target == null)
 				throw new NullReferenceException();
 			if (condition == null)
-				throw new ArgumentNullException("condition");
+				throw new ArgumentNullException(nameof(condition));
 			if (closure == null)
-				throw new ArgumentNullException("closure");
+				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
+			Contract.EndContractBlock();
 
 			var r = result;
 			bool writeLocked = true; // Initialize true so that if only only reading it still returns true.
@@ -581,10 +598,11 @@ namespace Open.Threading
 			if (target == null)
 				throw new NullReferenceException();
 			if (condition == null)
-				throw new ArgumentNullException("condition");
+				throw new ArgumentNullException(nameof(condition));
 			if (closure == null)
-				throw new ArgumentNullException("closure");
+				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
+			Contract.EndContractBlock();
 
 			bool c = false;
 			var lockHeld = target.Read(() => c = condition(LockType.Read), millisecondsTimeout, throwsOnTimeout);
@@ -605,10 +623,11 @@ namespace Open.Threading
 			if (target == null)
 				throw new NullReferenceException();
 			if (condition == null)
-				throw new ArgumentNullException("condition");
+				throw new ArgumentNullException(nameof(condition));
 			if (closure == null)
-				throw new ArgumentNullException("closure");
+				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
+			Contract.EndContractBlock();
 
 			bool c = false;
 			var lockHeld = target.Read(() => c = condition(LockType.Read), millisecondsTimeout, throwsOnTimeout);
@@ -633,10 +652,11 @@ namespace Open.Threading
 			if (target == null)
 				throw new NullReferenceException();
 			if (getValue == null)
-				throw new ArgumentNullException("getValue");
+				throw new ArgumentNullException(nameof(getValue));
 			if (createValue == null)
-				throw new ArgumentNullException("createValue");
+				throw new ArgumentNullException(nameof(createValue));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
+			Contract.EndContractBlock();
 
 			T result = null;
 			target.ReadWriteConditionalOptimized(
@@ -658,8 +678,9 @@ namespace Open.Threading
 			if (target == null)
 				throw new NullReferenceException();
 			if (valueFactory == null)
-				throw new ArgumentNullException("valueFactory");
+				throw new ArgumentNullException(nameof(valueFactory));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
+			Contract.EndContractBlock();
 
 			T r = default(T);
 			var lockHeld = target.Read(() => r = valueFactory(), millisecondsTimeout, false);
@@ -678,8 +699,9 @@ namespace Open.Threading
 			if (target == null)
 				throw new NullReferenceException();
 			if (valueFactory == null)
-				throw new ArgumentNullException("valueFactory");
+				throw new ArgumentNullException(nameof(valueFactory));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
+			Contract.EndContractBlock();
 
 			T r = default(T);
 			var lockHeld = target.Write(() => r = valueFactory(), millisecondsTimeout, false);
@@ -697,8 +719,9 @@ namespace Open.Threading
 			if (target == null)
 				throw new NullReferenceException();
 			if (valueFactory == null)
-				throw new ArgumentNullException("valueFactory");
+				throw new ArgumentNullException(nameof(valueFactory));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
+			Contract.EndContractBlock();
 
 			T result = default(T);
 			target.Read(() => result = valueFactory(), millisecondsTimeout, true);
@@ -715,8 +738,9 @@ namespace Open.Threading
 			if (target == null)
 				throw new NullReferenceException();
 			if (valueFactory == null)
-				throw new ArgumentNullException("valueFactory");
+				throw new ArgumentNullException(nameof(valueFactory));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
+			Contract.EndContractBlock();
 
 			T result = default(T);
 			target.Write(() => result = valueFactory(), millisecondsTimeout, true);

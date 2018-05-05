@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Open.Threading
+﻿namespace Open.Threading
 {
-    public enum LockType : byte
-    {
-        Read,
-        ReadUpgradeable,
-        Write
-    }
+	public enum LockType : byte
+	{
+		Read,
+		ReadUpgradeable,
+		Write
+	}
 }
