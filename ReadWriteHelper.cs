@@ -85,8 +85,8 @@ namespace Open.Threading
 		}
 
 
-		readonly ConcurrentQueue<object> ContextPool = new ConcurrentQueue<object>();
-		readonly ConcurrentQueue<ReaderWriterLockTracker> LockPool = new ConcurrentQueue<ReaderWriterLockTracker>();
+		readonly OptimisticArrayObjectPool<object> ContextPool;
+		readonly ConcurrentQueueObjectPool<ReaderWriterLockTracker> LockPool;
 
 		readonly ConcurrentDictionary<TKey, ReaderWriterLockTracker> Locks
 			= new ConcurrentDictionary<TKey, ReaderWriterLockTracker>();
@@ -96,7 +96,6 @@ namespace Open.Threading
 
 		public ReadWriteHelper() : this(false)
 		{
-
 		}
 
 		public ReadWriteHelper(bool supportRecursion)
@@ -106,6 +105,15 @@ namespace Open.Threading
 			RecursionPolicy = supportRecursion
 				? LockRecursionPolicy.SupportsRecursion
 				: LockRecursionPolicy.NoRecursion;
+
+			ContextPool = OptimisticArrayObjectPool.Create<object>();
+			LockPool = ConcurrentQueueObjectPool.CreateAutoDisposal(() =>
+			{
+				var created = new ReaderWriterLockTracker(RecursionPolicy);
+				if (Debugger.IsAttached)
+					created.BeforeDispose += new EventHandler(Debug_TrackerDisposedWhileInUse);
+				return created;
+			}, 1000);
 		}
 
 		public LockRecursionPolicy RecursionPolicy
@@ -140,16 +148,7 @@ namespace Open.Threading
 					   ReaderWriterLockTracker created = null;
 					   do
 					   {
-						   result = Locks.GetOrAdd(key, k =>
-						   {
-							   if (!LockPool.TryDequeue(out created))
-							   {
-								   created = new ReaderWriterLockTracker(RecursionPolicy);
-								   if (Debugger.IsAttached)
-									   created.BeforeDispose += new EventHandler(Debug_TrackerDisposedWhileInUse);
-							   }
-							   return created;
-						   });
+						   result = Locks.GetOrAdd(key, k => created = LockPool.Take());
 					   }
 					   // Safeguard against rare case of when a disposed tracker is retained via an exception (possibly?). :(
 					   while (!IsDisposed && result.IsDisposed);
@@ -161,7 +160,7 @@ namespace Open.Threading
 						   if (IsDisposed)
 							   created.Dispose();
 						   else
-							   LockPool.Enqueue(created);
+							   LockPool.Give(created);
 					   }
 
 					   // This should never get out of sync, but just in case...
@@ -227,8 +226,8 @@ namespace Open.Threading
 			var tracker = (ReaderWriterLockTracker)sender;
 			if (Locks.Select(kvp => kvp.Value).Contains(tracker))
 				Debug.Fail("Attempting to dispose a tracker that is in use.");
-			if (LockPool.Contains(tracker))
-				Debug.Fail("Attempting to dispose a tracker that is still availalbe in the pool.");
+			//if (LockPool.Contains(tracker))
+			//	Debug.Fail("Attempting to dispose a tracker that is still availalbe in the pool.");
 		}
 
 		private bool AcquireLock(ReaderWriterLockSlim target, LockType type, int? millisecondsTimeout = null, bool throwsOnTimeout = false)
@@ -290,8 +289,7 @@ namespace Open.Threading
 			ReaderWriterLockSlimExensions.ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
 
-			if (!ContextPool.TryDequeue(out object context) || context == null)
-				context = new Object();
+			var context = ContextPool.Take();
 
 			ReaderWriterLockTracker rwlock = GetLock(key, type, context, millisecondsTimeout, throwsOnTimeout);
 			if (rwlock == null)
@@ -307,7 +305,7 @@ namespace Open.Threading
 				{
 					ReleaseLock(rwlock.Lock, type);
 					rwlock.Clear(context);
-					ContextPool.Enqueue(context);
+					ContextPool.Give(context);
 				}
 				catch (Exception ex)
 				{
@@ -680,10 +678,11 @@ namespace Open.Threading
 								{
 									try
 									{
-										LockPool.Enqueue(tempLock);
+										LockPool.Give(tempLock);
 									}
 									catch (ObjectDisposedException)
 									{
+										// Rare case where lock pool get's disposed inbetween iterations.
 									}
 								}
 							}
@@ -759,11 +758,10 @@ namespace Open.Threading
 				var count = Locks.Count;
 				var maxCount = Math.Min(count, 100);
 
-				TrimPool(ContextPool, maxCount * 2);
-				TrimPool(LockPool, maxCount, true);//ConcurrentQueueTrimAndDispose(LockPool, maxCount);
+				LockPool.TrimTo(maxCount);
 
-				if (Debugger.IsAttached && LockPool.Any(l => l.IsDisposed))
-					Debug.Fail("LockPool is retaining a disposed tracker.");
+				//if (Debugger.IsAttached && LockPool.Any(l => l.IsDisposed))
+				//	Debug.Fail("LockPool is retaining a disposed tracker.");
 
 				if (count == 0)
 					ClearCleanup();
@@ -785,40 +783,27 @@ namespace Open.Threading
 		{
 			base.OnDispose(calledExplicitly);
 
-			bool lockHeld = CleanupManager.Write(() =>
+			if (calledExplicitly)
 			{
 
-				CleanupInternal();
-				Locks.Clear(); // Some locks may be removed, but releasing will still occur.
-				TrimPool(LockPool, 0, true, calledExplicitly);
+				bool lockHeld = CleanupManager.Write(() =>
+				{
 
-			}, calledExplicitly ? 1000 : 0); // We don't want to block for any reason for too long.
-											 // Dispose shouldn't be called without this being able to be cleaned.
+					CleanupInternal();
+					Locks.Clear(); // Some locks may be removed, but releasing will still occur.
+					LockPool.Dispose();
 
-			CleanupManager.Dispose(); // No more locks can be added after this...
+				}, 1000); // We don't want to block for any reason for too long.
+						  // Dispose shouldn't be called without this being able to be cleaned.
 
-			if (!lockHeld)
-			{
-				// Just to be sure...
-				Debug.WriteLineIf(calledExplicitly, "ReadWriteHelper unable to synchronize during dispose.");
-				CleanupInternal(); // Migrates to LockPool for cleanup or disposal...
+				CleanupManager.Dispose(); // No more locks can be added after this...
+
+				if (!lockHeld) CleanupInternal(); // Migrates to LockPool for cleanup or disposal...
+				Locks.Clear();
+				ContextPool.Dispose();
+				if (!lockHeld) LockPool.Dispose();
 			}
 
-			Locks.Clear();
-
-			TrimPool(ContextPool, 0, false, calledExplicitly);
-			if (!lockHeld)
-				TrimPool(LockPool, 0, true, calledExplicitly);
-
-			if (calledExplicitly && Debugger.IsAttached)
-			{
-				if (Locks.Any())
-					Debug.Fail("A lock was added after dispose.");
-				if (LockPool.Any())
-					Debug.Fail("Remaining trackers in lock pool.");
-				if (ContextPool.Any())
-					Debug.Fail("Remaining objects in context pool.");
-			}
 		}
 		#endregion
 
