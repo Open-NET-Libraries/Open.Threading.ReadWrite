@@ -22,19 +22,19 @@ namespace Open.Threading
 	public class ReadWriteHelper<TKey> : DeferredCleanupBase
 	{
 
-		private class ReaderWriterLockTracker : DisposableBase
+		class ReaderWriterLockTracker : DisposableBase
 		{
 			readonly HashSet<object> _registry = new HashSet<object>();
 
-			internal ReaderWriterLockSlim Lock;
+			public ReaderWriterLockSlim Lock;
 
-			public ReaderWriterLockTracker(ReaderWriterLockSlim rwlock)
-				: base()
+			private ReaderWriterLockTracker(ReaderWriterLockSlim rwlock)
 			{
 				Lock = rwlock;
 			}
 
-			public ReaderWriterLockTracker(LockRecursionPolicy policy) : this(new ReaderWriterLockSlim(policy))
+			public ReaderWriterLockTracker(LockRecursionPolicy policy)
+				: this(new ReaderWriterLockSlim(policy))
 			{
 			}
 
@@ -73,6 +73,7 @@ namespace Open.Threading
 				lock (_registry)
 				{
 					//Contract.Assume(CanDispose);
+					// ReSharper disable once RedundantAssignment
 					var count = _registry.Count;
 					Debug.WriteLineIf(count != 0, "Disposing a ReaderWriterLockTracker with " + count + " contexts still registered.");
 					_registry.Clear();
@@ -107,19 +108,26 @@ namespace Open.Threading
 				: LockRecursionPolicy.NoRecursion;
 
 			ContextPool = OptimisticArrayObjectPool.Create<object>();
-			LockPool = ConcurrentQueueObjectPool.CreateAutoDisposal(() =>
-			{
-				var created = new ReaderWriterLockTracker(RecursionPolicy);
-				if (Debugger.IsAttached)
-					created.BeforeDispose += new EventHandler(Debug_TrackerDisposedWhileInUse);
-				return created;
-			}, 1000);
+
+			Action<ReaderWriterLockTracker> recycle = null;
+#if DEBUG
+			recycle = rwlt => Debug.Assert(rwlt.Lock.IsLockFree());
+#endif
+			// ReSharper disable once ExpressionIsAlwaysNull
+			LockPool = new ConcurrentQueueObjectPool<ReaderWriterLockTracker>(Factory, recycle, d => d.Dispose(), 1000);
+		}
+
+		ReaderWriterLockTracker Factory()
+		{
+			var created = new ReaderWriterLockTracker(RecursionPolicy);
+			if (Debugger.IsAttached)
+				created.BeforeDispose += Debug_TrackerDisposedWhileInUse;
+			return created;
 		}
 
 		public LockRecursionPolicy RecursionPolicy
 		{
 			get;
-			private set;
 		}
 
 		private ReaderWriterLockTracker GetLock(TKey key, LockType type, object context, int? millisecondsTimeout = null, bool throwsOnTimeout = false)
@@ -135,89 +143,82 @@ namespace Open.Threading
 				return null;
 
 			// Need to be able to enter a lock before releasing access in order to prevent removal...
-			var r = CleanupManager.ReadValue(() =>
-		   	{
-				   // It is possible that a read could be acquired while disposing just before the dispose.
-				   if (IsDisposed)
-					   return null;
+			var r = CleanupManager.ReadValue(
+				() =>
+				{
+					// It is possible that a read could be acquired while disposing just before the dispose.
+					if (IsDisposed)
+						return null;
 
-				   // Get a tracker...
-				   ReaderWriterLockTracker result;
-				   {
-					   // Compare the tracker retrieved with the one created...
-					   ReaderWriterLockTracker created = null;
-					   do
-					   {
-						   result = Locks.GetOrAdd(key, k => created = LockPool.Take());
-					   }
-					   // Safeguard against rare case of when a disposed tracker is retained via an exception (possibly?). :(
-					   while (!IsDisposed && result.IsDisposed);
+					// Get a tracker...
+					ReaderWriterLockTracker result;
+					{
+						// Compare the tracker retrieved with the one created...
+						ReaderWriterLockTracker created = null;
+						do
+						{
+							result = Locks.GetOrAdd(key, k => created = LockPool.Take());
+						}
+						// Safeguard against rare case of when a disposed tracker is retained via an exception (possibly?). :(
+						while (!IsDisposed && result.IsDisposed);
 
 
-					   // If the one created is not the one retrieved, go ahead and add it to the pool so it doesn't go to waste.
-					   if (created != null && created != result)
-					   {
-						   if (IsDisposed)
-							   created.Dispose();
-						   else
-							   LockPool.Give(created);
-					   }
+						// If the one created is not the one retrieved, go ahead and add it to the pool so it doesn't go to waste.
+						if (created != null && created != result)
+						{
+							if (IsDisposed)
+								created.Dispose();
+							else
+								LockPool.Give(created);
+						}
 
-					   // This should never get out of sync, but just in case...
-					   var rlock = result.Lock;
-					   if (rlock == null || result.IsDisposed)
-					   {
-						   Debug.Fail("A lock tracker was retained after it was disposed.");
-						   return null;
-					   }
-					   else if (Debugger.IsAttached && rlock.RecursionPolicy == LockRecursionPolicy.NoRecursion)
-					   {
-						   if (rlock.IsWriteLockHeld && type == LockType.Read)
-							   Debugger.Break(); // 
-					   }
-				   }
+						// This should never get out of sync, but just in case...
+						var rlock = result.Lock;
+						if (rlock == null || result.IsDisposed)
+						{
+							Debug.Fail("A lock tracker was retained after it was disposed.");
+							return null;
+						}
+						else if (Debugger.IsAttached && rlock.RecursionPolicy == LockRecursionPolicy.NoRecursion)
+						{
+							if (rlock.IsWriteLockHeld && type == LockType.Read)
+								Debugger.Break(); // 
+						}
+					}
 
-				   // Quick check to avoid further processes...
-				   if (IsDisposed)
-					   return null;
+					// Quick check to avoid further processes...
+					if (IsDisposed)
+						return null;
 
-				   bool lockHeld = false;
-				   if (result.Reserve(context)) // Rare synchronization instance where this may be disposing at this point.
-				   {
-					   try
-					   {
-						   // result.Lock will only be null if the tracker has been disposed.
-						   lockHeld = AcquireLock(result.Lock, type, millisecondsTimeout, throwsOnTimeout);
-					   }
-					   catch (LockRecursionException lrex)
-					   {
-						   lrex.WriteToDebug();
-						   Debugger.Break(); // Need to be able to track down source.
-						   throw;
-					   }
-					   finally
-					   {
-						   if (!lockHeld)
-							   result.Clear(context);
-					   }
-				   }
+					var lockHeld = false;
+					if (!result.Reserve(context)) return null;
+					try
+					{
+						// result.Lock will only be null if the tracker has been disposed.
+						lockHeld = AcquireLock(result.Lock, type, millisecondsTimeout, throwsOnTimeout);
+					}
+					catch (LockRecursionException lrex)
+					{
+						lrex.WriteToDebug();
+						Debugger.Break(); // Need to be able to track down source.
+						throw;
+					}
+					finally
+					{
+						if (!lockHeld)
+							result.Clear(context);
+					}
 
-				   if (lockHeld)
-					   return result;
-				   else
-					   return null; // Null indicates a lock could not be acquired...
-			   });
+					return lockHeld ? result : null;
+				});
 
 			// In the rare case that a dispose could be initiated during this ReadValue:
 			// We need to not propagate locking...
-			if (r != null && IsDisposed)
-			{
-				ReleaseLock(r.Lock, type);
-				r.Clear(context);
-				r = null;
-			}
+			if (r == null || !IsDisposed) return r;
+			ReleaseLock(r.Lock, type);
+			r.Clear(context);
 
-			return r;
+			return null;
 
 		}
 
@@ -252,30 +253,26 @@ namespace Open.Threading
 
 		private void ReleaseLock(ReaderWriterLockSlim target, LockType type)
 		{
-			if (target != null)
+			if (target == null) return;
+			switch (type)
 			{
-				switch (type)
-				{
-					case LockType.Read:
-						target.ExitReadLock();
-						break;
-					case LockType.ReadUpgradeable:
-						target.ExitUpgradeableReadLock();
-						break;
-					case LockType.Write:
-						target.ExitWriteLock();
-						break;
-				}
-
-				if (!IsDisposed)
-				{
-					UpdateCleanupDelay();
-
-					//SetCleanup(CleanupMode.ImmediateSynchronous); 
-					// Now that we've realeased the lock, signal for cleanup later...
-					SetCleanup(CleanupMode.ImmediateDeferredIfPastDue);
-				}
+				case LockType.Read:
+					target.ExitReadLock();
+					break;
+				case LockType.ReadUpgradeable:
+					target.ExitUpgradeableReadLock();
+					break;
+				case LockType.Write:
+					target.ExitWriteLock();
+					break;
 			}
+
+			if (IsDisposed) return;
+			UpdateCleanupDelay();
+
+			//SetCleanup(CleanupMode.ImmediateSynchronous); 
+			// Now that we've realeased the lock, signal for cleanup later...
+			SetCleanup(CleanupMode.ImmediateDeferredIfPastDue);
 		}
 
 
@@ -291,7 +288,7 @@ namespace Open.Threading
 
 			var context = ContextPool.Take();
 
-			ReaderWriterLockTracker rwlock = GetLock(key, type, context, millisecondsTimeout, throwsOnTimeout);
+			var rwlock = GetLock(key, type, context, millisecondsTimeout, throwsOnTimeout);
 			if (rwlock == null)
 				return false;
 
@@ -320,9 +317,9 @@ namespace Open.Threading
 
 		private bool Execute<T>(TKey key, LockType type, out T result, Func<ReaderWriterLockSlim, T> closure, int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			T r = default(T);
+			T r = default;
 
-			bool acquired = Execute(key, type, (rwlock) =>
+			var acquired = Execute(key, type, (rwlock) =>
 			{
 				r = closure(rwlock);
 			}, millisecondsTimeout, throwsOnTimeout);
@@ -371,9 +368,7 @@ namespace Open.Threading
 		public bool Read<T>(
 			TKey key, out T result, Func<T> valueFactory,
 			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
-		{
-			return Execute(key, LockType.Read, out result, valueFactory, millisecondsTimeout, throwsOnTimeout);
-		}
+			=> Execute(key, LockType.Read, out result, valueFactory, millisecondsTimeout, throwsOnTimeout);
 
 		/// <summary>
 		/// Executes the query within an upgradeable read lock based upon the cacheKey provided..
@@ -382,9 +377,7 @@ namespace Open.Threading
 		private bool ReadUpgradeable(
 			TKey key, Action<ReaderWriterLockSlim> closure,
 			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
-		{
-			return Execute(key, LockType.ReadUpgradeable, closure, millisecondsTimeout, throwsOnTimeout);
-		}
+			=> Execute(key, LockType.ReadUpgradeable, closure, millisecondsTimeout, throwsOnTimeout);
 
 		/// <summary>
 		/// Executes the query within an upgradeable read lock based upon the cacheKey provided..
@@ -393,9 +386,7 @@ namespace Open.Threading
 		public bool ReadUpgradeable<T>(
 			TKey key, out T result, Func<T> closure,
 			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
-		{
-			return Execute(key, LockType.ReadUpgradeable, out result, closure, millisecondsTimeout, throwsOnTimeout);
-		}
+			=> Execute(key, LockType.ReadUpgradeable, out result, closure, millisecondsTimeout, throwsOnTimeout);
 
 		/// <summary>
 		/// Executes the query within an upgradeable read lock based upon the cacheKey provided..
@@ -404,18 +395,14 @@ namespace Open.Threading
 		public bool ReadUpgradeable(
 			TKey key, Action closure,
 			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
-		{
-			return Execute(key, LockType.ReadUpgradeable, closure, millisecondsTimeout, throwsOnTimeout);
-		}
+			=> Execute(key, LockType.ReadUpgradeable, closure, millisecondsTimeout, throwsOnTimeout);
 
 		/// <summary>
 		/// Executes the query within a write lock based upon the cacheKey provided..
 		/// </summary>
 		/// <returns>Returns false if a timeout is reached.</returns>
 		public bool Write(TKey key, Action closure, int? millisecondsTimeout = null, bool throwsOnTimeout = false)
-		{
-			return Execute(key, LockType.Write, closure, millisecondsTimeout, throwsOnTimeout);
-		}
+			=> Execute(key, LockType.Write, closure, millisecondsTimeout, throwsOnTimeout);
 
 		/// <summary>
 		/// Executes the query within a write lock based upon the cacheKey provided..
@@ -424,9 +411,7 @@ namespace Open.Threading
 		public bool Write<T>(
 			TKey key, out T result, Func<T> closure,
 			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
-		{
-			return Execute(key, LockType.Write, out result, closure, millisecondsTimeout, throwsOnTimeout);
-		}
+			=> Execute(key, LockType.Write, out result, closure, millisecondsTimeout, throwsOnTimeout);
 
 		/// <summary>
 		/// Executes the query within a read lock based upon the cacheKey provided..
@@ -435,7 +420,7 @@ namespace Open.Threading
 		/// <returns>Returns the addValue from the valueFactory.</returns>
 		public T ReadValue<T>(TKey key, Func<T> valueFactory, int? millisecondsTimeout = null)
 		{
-			Read(key, out T result, valueFactory, millisecondsTimeout, true);
+			Read(key, out var result, valueFactory, millisecondsTimeout, true);
 			return result;
 		}
 
@@ -446,7 +431,7 @@ namespace Open.Threading
 		/// <returns>Returns the addValue from the valueFactory.</returns>
 		public T WriteValue<T>(TKey key, Func<T> valueFactory, int? millisecondsTimeout = null)
 		{
-			Write(key, out T result, valueFactory, millisecondsTimeout, true);
+			Write(key, out var result, valueFactory, millisecondsTimeout, true);
 			return result;
 		}
 
@@ -454,7 +439,11 @@ namespace Open.Threading
 		/// Method for synchronizing write access.  Starts by executing the condition without a lock.
 		/// Note: Passing a bool to the condition when a lock is acquired helps if it is important to the cosuming logic to avoid recursive locking.
 		/// </summary>
+		/// <param name="key">The key to lock by.</param>
 		/// <param name="condition">Takes a bool where false means no lock and true means a write lock.  Returns true if it should execute the query Action. ** NOT THREAD SAFE</param>
+		/// <param name="closure">Action to execute once a lock is acquired.</param>
+		/// <param name="millisecondsTimeout">Indicates if and for how long a timeout is used to acquire a lock.</param>
+		/// <param name="throwsOnTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
 		/// <returns>Returns false if a timeout is reached.</returns>
 		protected bool WriteConditional(TKey key, Func<bool, bool> condition, Action closure, int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
@@ -481,7 +470,11 @@ namespace Open.Threading
 		/// Method for synchronizing write access.  Starts by executing the condition with a read lock.  Then if necessary after releasing the read lock, acquires a write lock.
 		/// Note: Passing a LockType to the condition when a lock is acquired helps if it is important to the cosuming logic to avoid recursive locking.
 		/// </summary>
+		/// <param name="key">The key to lock by.</param>
 		/// <param name="condition">Takes a bool where false means a read lock and true means a write lock.  Returns true if it should execute the query Action.</param>
+		/// <param name="closure">Action to execute once a lock is acquired.</param>
+		/// <param name="millisecondsTimeout">Indicates if and for how long a timeout is used to acquire a lock.</param>
+		/// <param name="throwsOnTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
 		/// <returns>Returns false if a timeout is reached.</returns>
 		public bool ReadWriteConditional(
 			TKey key, Func<LockType, bool> condition, Action closure,
@@ -491,7 +484,7 @@ namespace Open.Threading
 				throw new ArgumentNullException(nameof(condition));
 			Contract.EndContractBlock();
 
-			bool c = false;
+			var c = false;
 			var lockHeld = Read(key, () => c = condition(LockType.Read), millisecondsTimeout, throwsOnTimeout);
 			if (lockHeld && c)
 			{
@@ -510,7 +503,12 @@ namespace Open.Threading
 		/// Method for synchronizing write access.  Starts by executing the condition with a read lock.  Then if necessary after releasing the read lock, acquires a write lock.
 		/// Note: Passing a LockType to the condition when a lock is acquired helps if it is important to the cosuming logic to avoid recursive locking.
 		/// </summary>
+		/// <param name="key">The key to lock by.</param>
+		/// <param name="result">The result from the operation.</param>
 		/// <param name="condition">Takes a bool where false means a read lock and true means a write lock.  Returns true if it should execute the query Action.</param>
+		/// <param name="closure">Action to execute once a lock is acquired.</param>
+		/// <param name="millisecondsTimeout">Indicates if and for how long a timeout is used to acquire a lock.</param>
+		/// <param name="throwsOnTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
 		/// <returns>Returns false if a timeout is reached.</returns>
 		public bool ReadWriteConditional<T>(
 			ref T result,
@@ -545,7 +543,11 @@ namespace Open.Threading
 		/// Method for synchronizing write access.  Starts by executing the condition with an upgradeable read lock before acquiring a write lock.
 		/// Note: Passing a boolean to the condition when a lock is acquired helps if it is important to the cosuming logic to avoid recursive locking.
 		/// </summary>
+		/// <param name="key">The key to lock by.</param>
 		/// <param name="condition">Takes a bool where false means a read lock and true means a write lock.  Returns true if it should execute the query Action.</param>
+		/// <param name="closure">Action to execute once a lock is acquired.</param>
+		/// <param name="millisecondsTimeout">Indicates if and for how long a timeout is used to acquire a lock.</param>
+		/// <param name="throwsOnTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
 		/// <returns>Returns false if a timeout is reached.</returns>
 		public bool ReadUpgradeableWriteConditional(
 			TKey key, Func<bool> condition, Action closure,
@@ -556,9 +558,9 @@ namespace Open.Threading
 			Contract.EndContractBlock();
 
 			// Initialize true so that if only only reading it still returns true.
-			bool writeLocked = true;
+			var writeLocked = true;
 			// Since read upgradable ensures that no changes should be made to the condition, then it is acceptable to not recheck the condition after lock...
-			bool readLocked = ReadUpgradeable(key, (rwlock) =>
+			var readLocked = ReadUpgradeable(key, (rwlock) =>
 			{
 				if (condition())
 					// Synchronize lock acquisistion.
@@ -572,7 +574,12 @@ namespace Open.Threading
 		/// Method for synchronizing write access.  Starts by executing the condition with an upgradeable read lock before acquiring a write lock.
 		/// Note: Passing a boolean to the condition when a lock is acquired helps if it is important to the cosuming logic to avoid recursive locking.
 		/// </summary>
+		/// <param name="result">The result from the operation.</param>
+		/// <param name="key">The key to lock by.</param>
 		/// <param name="condition">Takes a bool where false means a read lock and true means a write lock.  Returns true if it should execute the query Action.</param>
+		/// <param name="closure">Action to execute once a lock is acquired.</param>
+		/// <param name="millisecondsTimeout">Indicates if and for how long a timeout is used to acquire a lock.</param>
+		/// <param name="throwsOnTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
 		/// <returns>Returns false if a timeout is reached.</returns>
 		public bool ReadUpgradeableWriteConditional<T>(
 			ref T result,
@@ -584,21 +591,17 @@ namespace Open.Threading
 			Contract.EndContractBlock();
 
 			var r = result;
-			bool writeLocked = true; // Initialize true so that if only only reading it still returns true.
-			bool written = false;
+			var writeLocked = true; // Initialize true so that if only only reading it still returns true.
+			var written = false;
 			// Since read upgradable ensures that no changes should be made to the condition, then it is acceptable to not recheck the condition after lock...
-			bool readLocked = ReadUpgradeable(key, (rwlock) =>
+			var readLocked = ReadUpgradeable(key, (rwlock) =>
 			{
-				if (condition())
-				{
-					// Synchronize lock acquisistion.
-					writeLocked = rwlock.Write(out r, closure, millisecondsTimeout, throwsOnTimeout);
-					written = true;
-				}
+				if (!condition()) return;
+				// Synchronize lock acquisistion.
+				writeLocked = rwlock.Write(out r, closure, millisecondsTimeout, throwsOnTimeout);
+				written = true;
 			});
-			if (written)
-				result = r;
-
+			if (written) result = r;
 
 			return readLocked && writeLocked;
 		}
@@ -607,7 +610,11 @@ namespace Open.Threading
 		/// ReaderWriterLockSlim extension for synchronizing write access.  Starts by executing the condition with a read lock.
 		/// Then if necessary executes the condition with an upgradeable read lock before acquiring a write lock.
 		/// </summary>
+		/// <param name="key">The key to lock by.</param>
 		/// <param name="condition">Takes a bool where false means a read lock and true means a write lock.  Returns true if it should execute the query Action.</param>
+		/// <param name="closure">Action to execute once a lock is acquired.</param>
+		/// <param name="millisecondsTimeout">Indicates if and for how long a timeout is used to acquire a lock.</param>
+		/// <param name="throwsOnTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
 		/// <returns>Returns false if a timeout is reached.</returns>
 		public bool ReadWriteConditionalOptimized(
 			TKey key, Func<LockType, bool> condition, Action closure,
@@ -617,7 +624,7 @@ namespace Open.Threading
 				throw new ArgumentNullException(nameof(condition));
 			Contract.EndContractBlock();
 
-			bool c = false;
+			var c = false;
 			var lockHeld = Read(key, () => c = condition(LockType.Read), millisecondsTimeout, throwsOnTimeout);
 			return lockHeld && (!c || ReadUpgradeableWriteConditional(key, () => condition(LockType.ReadUpgradeable), closure, millisecondsTimeout, throwsOnTimeout));
 		}
@@ -626,7 +633,12 @@ namespace Open.Threading
 		/// ReaderWriterLockSlim extension for synchronizing write access.  Starts by executing the condition with a read lock.
 		/// Then if necessary executes the condition with an upgradeable read lock before acquiring a write lock.
 		/// </summary>
+		/// <param name="key">The key to lock by.</param>
+		/// <param name="result">The result from the operation.</param>
 		/// <param name="condition">Takes a bool where false means a read lock and true means a write lock.  Returns true if it should execute the query Action.</param>
+		/// <param name="closure">Action to execute once a lock is acquired.</param>
+		/// <param name="millisecondsTimeout">Indicates if and for how long a timeout is used to acquire a lock.</param>
+		/// <param name="throwsOnTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
 		/// <returns>Returns false if a timeout is reached.</returns>
 		public bool ReadWriteConditionalOptimized<T>(
 			TKey key, ref T result, Func<LockType, bool> condition, Func<T> closure,
@@ -636,7 +648,7 @@ namespace Open.Threading
 				throw new ArgumentNullException(nameof(condition));
 			Contract.EndContractBlock();
 
-			bool c = false;
+			var c = false;
 			var lockHeld = Read(key, () => c = condition(LockType.Read), millisecondsTimeout, throwsOnTimeout);
 			return lockHeld && (!c || ReadUpgradeableWriteConditional(ref result, key, () => condition(LockType.ReadUpgradeable), closure, millisecondsTimeout, throwsOnTimeout));
 		}
@@ -653,46 +665,43 @@ namespace Open.Threading
 				if (key == null)
 					throw new NullReferenceException();
 
-				if (Locks.TryGetValue(key, out ReaderWriterLockTracker tempLock) && tempLock != null) // This should be accurate and synchronized since we keep these locks private.
-				{
-					if (tempLock.CanDispose && Locks.TryRemove(key, out tempLock) && tempLock != null)
-					{
-						if (Debugger.IsAttached && tempLock.IsDisposed && !this.IsDisposed)
-						{
-							// Possilby caused by an exception?
-							Debug.Fail("A tracker was disposed while in the lock registry.");
-						}
+				if (!Locks.TryGetValue(key, out var tempLock) || tempLock == null) continue;
+				if (!tempLock.CanDispose || !Locks.TryRemove(key, out tempLock) || tempLock == null) continue;
 
-						//lock (tempLock)
-						//{
-						if (!tempLock.IsDisposed)
+#if DEBUG
+				if (tempLock.IsDisposed && !IsDisposed)
+				{
+					// Possilby caused by an exception?
+					Debug.Fail("A tracker was disposed while in the lock registry.");
+				}
+#endif
+
+				//lock (tempLock)
+				//{
+				if (tempLock.IsDisposed) continue;
+				if (tempLock.CanDispose)
+				{
+					if (IsDisposed)
+					{
+						// Don't add back to the pool, just get rid of..
+						tempLock.Dispose();
+					}
+					else
+					{
+						try
 						{
-							if (tempLock.CanDispose)
-							{
-								if (this.IsDisposed)
-								{
-									// Don't add back to the pool, just get rid of..
-									tempLock.Dispose();
-								}
-								else
-								{
-									try
-									{
-										LockPool.Give(tempLock);
-									}
-									catch (ObjectDisposedException)
-									{
-										// Rare case where lock pool get's disposed inbetween iterations.
-									}
-								}
-							}
-							else
-								// Just in case something happens on remove...
-								Locks.TryAdd(key, tempLock);
+							LockPool.Give(tempLock);
 						}
-						//}
+						catch (ObjectDisposedException)
+						{
+							// Rare case where lock pool get's disposed inbetween iterations.
+						}
 					}
 				}
+				else
+					// Just in case something happens on remove...
+					Locks.TryAdd(key, tempLock);
+				//}
 			}
 		}
 
@@ -703,53 +712,52 @@ namespace Open.Threading
 				CleanupDelay = Math.Max(Math.Min(1000000 / (Locks.Count + 1), 10000), 1000); // Don't allow for less than.
 		}
 
-		private void TrimPool<T>(ConcurrentQueue<T> target, int maxCount = 0, bool dispose = false, bool allowExceptions = true)
-		{
-			if (target == null)
-				throw new ArgumentNullException(nameof(target));
-			Contract.EndContractBlock();
+		//		private void TrimPool<T>(ConcurrentQueue<T> target, int maxCount = 0, bool dispose = false, bool allowExceptions = true)
+		//		{
+		//			if (target == null)
+		//				throw new ArgumentNullException(nameof(target));
+		//			Contract.EndContractBlock();
 
-			//var d = new List<IDisposable>();
-			try
-			{
-				while (!target.IsEmpty && target.Count > maxCount && target.TryDequeue(out T context))
-				{
-					if (dispose)
-					{
-						if (context is IDisposable i)
-						{
-							//d.Add(i);
-							try
-							{
-								i.Dispose();
-							}
-							catch
-							{
-								if (allowExceptions)
-									throw;
-							}
-						}
-					}
-				}
+		//			//var d = new List<IDisposable>();
+		//			try
+		//			{
+		//				while (!target.IsEmpty && target.Count > maxCount && target.TryDequeue(out var context))
+		//				{
+		//					if (!dispose) continue;
+		//					if (!(context is IDisposable i)) continue;
+		//					//d.Add(i);
+		//					try
+		//					{
+		//						i.Dispose();
+		//					}
+		//					catch
+		//					{
+		//						if (allowExceptions)
+		//							throw;
+		//					}
+		//				}
 
-				if (Debugger.IsAttached && target.Where(t => t is DisposableBase).Cast<DisposableBase>().Any(t => t.IsDisposed))
-					Debug.Fail("Disposed object retained in bag.");
-			}
-			catch
-			{
-				if (allowExceptions)
-					throw;
-			}
-			// Complete the disposing in another thread since the profiler may be confused about it's reference at snapshot time.
-			//if (dispose && d.Any())
-			//Task.Factory.StartNew(() => d.DisposeAll());
-		}
+		//#if DEBUG
+		//				if (target.Where(t => t is DisposableBase).Cast<DisposableBase>().Any(t => t.IsDisposed))
+		//					Debug.Fail("Disposed object retained in bag.");	
+		//#endif
+
+		//			}
+		//			catch
+		//			{
+		//				if (allowExceptions)
+		//					throw;
+		//			}
+		//			// Complete the disposing in another thread since the profiler may be confused about it's reference at snapshot time.
+		//			//if (dispose && d.Any())
+		//			//Task.Factory.StartNew(() => d.DisposeAll());
+		//		}
 
 		protected override void OnCleanup()
 		{
 
 			// Prevents new locks from being acquired while a cleanup is active.
-			bool lockHeld = CleanupManager.WriteConditional(write => !this.IsDisposed, () =>
+			var lockHeld = CleanupManager.WriteConditional(write => !IsDisposed, () =>
 			{
 				UpdateCleanupDelay();
 
@@ -758,6 +766,7 @@ namespace Open.Threading
 				var count = Locks.Count;
 				var maxCount = Math.Min(count, 100);
 
+				//ContextPool.TrimTo(maxCount * 2);
 				LockPool.TrimTo(maxCount);
 
 				//if (Debugger.IsAttached && LockPool.Any(l => l.IsDisposed))
@@ -768,41 +777,34 @@ namespace Open.Threading
 
 			}, 10000); // Use a timeout to ensure a busy collection isn't over locked.
 
-			if (!IsDisposed)
-			{
-				if (!lockHeld) // Defer it since it wasn't done.
-				{
-					// Just to be sure...
-					Debug.WriteLine("ReadWriteHelper cleanup deferred.");
-					DeferCleanup();
-				}
-			}
+			if (IsDisposed) return;
+			if (lockHeld) return;
+			// Just to be sure...
+			Debug.WriteLine("ReadWriteHelper cleanup deferred.");
+			DeferCleanup();
 		}
 
 		protected override void OnDispose(bool calledExplicitly)
 		{
 			base.OnDispose(calledExplicitly);
 
-			if (calledExplicitly)
+			if (!calledExplicitly) return;
+
+			var lockPool = LockPool;
+			var lockHeld = CleanupManager.Write(() =>
 			{
+				CleanupInternal();
+				Locks.Clear(); // Some locks may be removed, but releasing will still occur.
+				lockPool.Dispose();
+			}, 1000); // We don't want to block for any reason for too long.
+					  // Dispose shouldn't be called without this being able to be cleaned.
 
-				bool lockHeld = CleanupManager.Write(() =>
-				{
+			CleanupManager.Dispose(); // No more locks can be added after this...
 
-					CleanupInternal();
-					Locks.Clear(); // Some locks may be removed, but releasing will still occur.
-					LockPool.Dispose();
-
-				}, 1000); // We don't want to block for any reason for too long.
-						  // Dispose shouldn't be called without this being able to be cleaned.
-
-				CleanupManager.Dispose(); // No more locks can be added after this...
-
-				if (!lockHeld) CleanupInternal(); // Migrates to LockPool for cleanup or disposal...
-				Locks.Clear();
-				ContextPool.Dispose();
-				if (!lockHeld) LockPool.Dispose();
-			}
+			if (!lockHeld) CleanupInternal(); // Migrates to LockPool for cleanup or disposal...
+			Locks.Clear();
+			ContextPool.Dispose();
+			if (!lockHeld) LockPool.Dispose();
 
 		}
 		#endregion

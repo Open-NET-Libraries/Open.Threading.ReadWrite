@@ -33,8 +33,8 @@ namespace Open.Threading
 		: base(target, Monitor.TryEnter(target, millisecondsTimeout))
 		{
 			if (!LockHeld && throwIfTimeout)
-				throw new TimeoutException(String.Format(
-					"Could not acquire a lock within the timeout specified. (millisecondsTimeout={0})", millisecondsTimeout));
+				throw new TimeoutException(
+					$"Could not acquire a lock within the timeout specified. (millisecondsTimeout={millisecondsTimeout})");
 
 		}
 
