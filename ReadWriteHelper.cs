@@ -109,9 +109,10 @@ namespace Open.Threading
 
 			ContextPool = OptimisticArrayObjectPool.Create<object>();
 
-			Action<ReaderWriterLockTracker> recycle = null;
 #if DEBUG
-			recycle = rwlt => Debug.Assert(rwlt.Lock.IsLockFree());
+			void recycle(ReaderWriterLockTracker rwlt) => Debug.Assert(rwlt.Lock.IsLockFree());
+#else
+			Action<ReaderWriterLockTracker> recycle = null;
 #endif
 			// ReSharper disable once ExpressionIsAlwaysNull
 			LockPool = new ConcurrentQueueObjectPool<ReaderWriterLockTracker>(Factory, recycle, d => d.Dispose(), 1000);
