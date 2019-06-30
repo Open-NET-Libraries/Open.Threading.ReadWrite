@@ -3,7 +3,6 @@
  * Licensing: MIT https://github.com/electricessence/Open/blob/dotnet-core/LICENSE.md
  */
 
-using Open.Diagnostics;
 using Open.Disposable;
 using System;
 using System.Collections.Concurrent;
@@ -40,7 +39,7 @@ namespace Open.Threading
 
 			public bool Reserve(object context)
 			{
-				if (IsDisposed)
+				if (WasDisposed)
 					return false;
 
 				lock (_registry)
@@ -140,7 +139,7 @@ namespace Open.Threading
 			ReaderWriterLockSlimExensions.ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
 
-			if (IsDisposed)
+			if (WasDisposed)
 				return null;
 
 			// Need to be able to enter a lock before releasing access in order to prevent removal...
@@ -148,7 +147,7 @@ namespace Open.Threading
 				() =>
 				{
 					// It is possible that a read could be acquired while disposing just before the dispose.
-					if (IsDisposed)
+					if (WasDisposed)
 						return null;
 
 					// Get a tracker...
@@ -161,13 +160,13 @@ namespace Open.Threading
 							result = Locks.GetOrAdd(key, k => created = LockPool.Take());
 						}
 						// Safeguard against rare case of when a disposed tracker is retained via an exception (possibly?). :(
-						while (!IsDisposed && result.IsDisposed);
+						while (!WasDisposed && result.WasDisposed);
 
 
 						// If the one created is not the one retrieved, go ahead and add it to the pool so it doesn't go to waste.
 						if (created != null && created != result)
 						{
-							if (IsDisposed)
+							if (WasDisposed)
 								created.Dispose();
 							else
 								LockPool.Give(created);
@@ -175,7 +174,7 @@ namespace Open.Threading
 
 						// This should never get out of sync, but just in case...
 						var rlock = result.Lock;
-						if (rlock == null || result.IsDisposed)
+						if (rlock == null || result.WasDisposed)
 						{
 							Debug.Fail("A lock tracker was retained after it was disposed.");
 							return null;
@@ -188,7 +187,7 @@ namespace Open.Threading
 					}
 
 					// Quick check to avoid further processes...
-					if (IsDisposed)
+					if (WasDisposed)
 						return null;
 
 					var lockHeld = false;
@@ -200,7 +199,7 @@ namespace Open.Threading
 					}
 					catch (LockRecursionException lrex)
 					{
-						lrex.WriteToDebug();
+						Debug.WriteLine(lrex.ToString());
 						Debugger.Break(); // Need to be able to track down source.
 						throw;
 					}
@@ -215,7 +214,7 @@ namespace Open.Threading
 
 			// In the rare case that a dispose could be initiated during this ReadValue:
 			// We need to not propagate locking...
-			if (r == null || !IsDisposed) return r;
+			if (r == null || !WasDisposed) return r;
 			ReleaseLock(r.Lock, type);
 			r.Clear(context);
 
@@ -268,7 +267,7 @@ namespace Open.Threading
 					break;
 			}
 
-			if (IsDisposed) return;
+			if (WasDisposed) return;
 			UpdateCleanupDelay();
 
 			//SetCleanup(CleanupMode.ImmediateSynchronous); 
@@ -307,7 +306,7 @@ namespace Open.Threading
 				}
 				catch (Exception ex)
 				{
-					ex.WriteToDebug();
+					Debug.WriteLine(ex.ToString());
 					// The above cannot fail or dire concequences...
 					Debugger.Break();
 					throw;
@@ -670,7 +669,7 @@ namespace Open.Threading
 				if (!tempLock.CanDispose || !Locks.TryRemove(key, out tempLock) || tempLock == null) continue;
 
 #if DEBUG
-				if (tempLock.IsDisposed && !IsDisposed)
+				if (tempLock.WasDisposed && !WasDisposed)
 				{
 					// Possilby caused by an exception?
 					Debug.Fail("A tracker was disposed while in the lock registry.");
@@ -679,10 +678,10 @@ namespace Open.Threading
 
 				//lock (tempLock)
 				//{
-				if (tempLock.IsDisposed) continue;
+				if (tempLock.WasDisposed) continue;
 				if (tempLock.CanDispose)
 				{
-					if (IsDisposed)
+					if (WasDisposed)
 					{
 						// Don't add back to the pool, just get rid of..
 						tempLock.Dispose();
@@ -709,7 +708,7 @@ namespace Open.Threading
 		protected void UpdateCleanupDelay()
 		{
 			// This presents a maximum delay of 10 seconds and if the number of lock counts get's over 100 it will decrease the time before cleanup.
-			if (!IsDisposed)
+			if (!WasDisposed)
 				CleanupDelay = Math.Max(Math.Min(1000000 / (Locks.Count + 1), 10000), 1000); // Don't allow for less than.
 		}
 
@@ -739,7 +738,7 @@ namespace Open.Threading
 		//				}
 
 		//#if DEBUG
-		//				if (target.Where(t => t is DisposableBase).Cast<DisposableBase>().Any(t => t.IsDisposed))
+		//				if (target.Where(t => t is DisposableBase).Cast<DisposableBase>().Any(t => t.WasDisposed))
 		//					Debug.Fail("Disposed object retained in bag.");	
 		//#endif
 
@@ -758,7 +757,7 @@ namespace Open.Threading
 		{
 
 			// Prevents new locks from being acquired while a cleanup is active.
-			var lockHeld = CleanupManager.WriteConditional(write => !IsDisposed, () =>
+			var lockHeld = CleanupManager.WriteConditional(write => !WasDisposed, () =>
 			{
 				UpdateCleanupDelay();
 
@@ -770,7 +769,7 @@ namespace Open.Threading
 				//ContextPool.TrimTo(maxCount * 2);
 				LockPool.TrimTo(maxCount);
 
-				//if (Debugger.IsAttached && LockPool.Any(l => l.IsDisposed))
+				//if (Debugger.IsAttached && LockPool.Any(l => l.WasDisposed))
 				//	Debug.Fail("LockPool is retaining a disposed tracker.");
 
 				if (count == 0)
@@ -778,7 +777,7 @@ namespace Open.Threading
 
 			}, 10000); // Use a timeout to ensure a busy collection isn't over locked.
 
-			if (IsDisposed) return;
+			if (WasDisposed) return;
 			if (lockHeld) return;
 			// Just to be sure...
 			Debug.WriteLine("ReadWriteHelper cleanup deferred.");
