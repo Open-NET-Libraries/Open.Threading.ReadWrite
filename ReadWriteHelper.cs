@@ -67,7 +67,7 @@ namespace Open.Threading
 				}
 			}
 
-			protected override void OnDispose(bool calledExplicitly)
+			protected override void OnDispose()
 			{
 				lock (_registry)
 				{
@@ -784,11 +784,9 @@ namespace Open.Threading
 			DeferCleanup();
 		}
 
-		protected override void OnDispose(bool calledExplicitly)
+		protected override void OnDispose()
 		{
-			base.OnDispose(calledExplicitly);
-
-			if (!calledExplicitly) return;
+			base.OnDispose();
 
 			var lockPool = LockPool;
 			var lockHeld = CleanupManager.Write(() =>
