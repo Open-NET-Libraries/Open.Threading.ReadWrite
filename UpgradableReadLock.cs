@@ -38,7 +38,7 @@ namespace Open.Threading
 	public sealed class UpgradableReadLock : LockBase<ReaderWriterLockSlim>
 	{
 		readonly object _sync = new object();
-		WriteLock _upgraded;
+		WriteLock? _upgraded;
 		public UpgradableReadLock(ReaderWriterLockSlim target, int? millisecondsTimeout = null, bool throwIfTimeout = true)
 		: base(target, target.EnterUpgradeableReadLock(millisecondsTimeout, throwIfTimeout))
 		{
@@ -47,7 +47,7 @@ namespace Open.Threading
 		// A useful utility but it's completely fine to create your own write lock under an upgradable one.
 		public void UpgradeToWriteLock(int? millisecondsTimeout = null)
 		{
-			if (!LockHeld)
+			if (_target is null)
 				throw new InvalidOperationException("Cannot upgrade a lock when the lock was not held.");
 			lock (_sync)
 			{
@@ -63,14 +63,14 @@ namespace Open.Threading
 				throw new InvalidOperationException("Cannot upgrade a lock when the lock was not held.");
 			lock (_sync)
 			{
-				if (_upgraded == null)
+				if (_upgraded is null)
 					throw new InvalidOperationException("There is no write lock in effect to downgrade from.");
 				_upgraded.Dispose();
 				_upgraded = null;
 			}
 		}
 
-		protected override void OnDispose(ReaderWriterLockSlim target)
+		protected override void OnDispose(ReaderWriterLockSlim? target)
 		{
 			lock (_sync) Interlocked.Exchange(ref _upgraded, null)?.Dispose();
 			target?.ExitUpgradeableReadLock();

@@ -1,6 +1,5 @@
 ﻿/*!
  * @author electricessence / https://github.com/electricessence/
- * Licensing: MIT https://github.com/electricessence/Open/blob/dotnet-core/LICENSE.md
  * Based upon code from Stephen Cleary's Nitro library.
  */
 
@@ -12,7 +11,7 @@ namespace Open.Threading
 	public abstract class LockBase<TSync> : IDisposable
 		where TSync : class
 	{
-		protected TSync _target;
+		protected TSync? _target;
 		public readonly bool LockHeld;
 
 		protected LockBase(TSync target, bool lockHeld)
@@ -21,7 +20,7 @@ namespace Open.Threading
 			if (lockHeld)
 				_target = target;
 		}
-		protected abstract void OnDispose(TSync target);
+		protected abstract void OnDispose(TSync? target);
 
 		public void Dispose()
 		{

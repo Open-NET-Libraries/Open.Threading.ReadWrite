@@ -1,13 +1,9 @@
-﻿/*!
- * @author electricessence / https://github.com/electricessence/
- * Licensing: MIT https://github.com/electricessence/Open/blob/dotnet-core/LICENSE.md
- */
-
-using Open.Disposable;
+﻿using Open.Disposable;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
@@ -25,7 +21,7 @@ namespace Open.Threading
 		{
 			readonly HashSet<object> _registry = new HashSet<object>();
 
-			public ReaderWriterLockSlim Lock;
+			public ReaderWriterLockSlim? Lock;
 
 			private ReaderWriterLockTracker(ReaderWriterLockSlim rwlock)
 			{
@@ -111,7 +107,7 @@ namespace Open.Threading
 #if DEBUG
 			void recycle(ReaderWriterLockTracker rwlt) => Debug.Assert(rwlt.Lock.IsLockFree());
 #else
-			Action<ReaderWriterLockTracker> recycle = null;
+			Action<ReaderWriterLockTracker>? recycle = null;
 #endif
 			// ReSharper disable once ExpressionIsAlwaysNull
 			LockPool = new ConcurrentQueueObjectPool<ReaderWriterLockTracker>(Factory, recycle, d => d.Dispose(), 1000);
@@ -130,11 +126,11 @@ namespace Open.Threading
 			get;
 		}
 
-		private ReaderWriterLockTracker GetLock(TKey key, LockType type, object context, int? millisecondsTimeout = null, bool throwsOnTimeout = false)
+		private ReaderWriterLockTracker? GetLock(TKey key, LockType type, object context, int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (key == null)
+			if (key is null)
 				throw new ArgumentNullException(nameof(key));
-			if (context == null)
+			if (context is null)
 				throw new ArgumentNullException(nameof(context));
 			ReaderWriterLockSlimExensions.ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
@@ -154,7 +150,7 @@ namespace Open.Threading
 					ReaderWriterLockTracker result;
 					{
 						// Compare the tracker retrieved with the one created...
-						ReaderWriterLockTracker created = null;
+						ReaderWriterLockTracker? created = null;
 						do
 						{
 							result = Locks.GetOrAdd(key, k => created = LockPool.Take());
@@ -174,7 +170,7 @@ namespace Open.Threading
 
 						// This should never get out of sync, but just in case...
 						var rlock = result.Lock;
-						if (rlock == null || result.WasDisposed)
+						if (rlock is null || result.WasDisposed)
 						{
 							Debug.Fail("A lock tracker was retained after it was disposed.");
 							return null;
@@ -214,7 +210,7 @@ namespace Open.Threading
 
 			// In the rare case that a dispose could be initiated during this ReadValue:
 			// We need to not propagate locking...
-			if (r == null || !WasDisposed) return r;
+			if (r is null || !WasDisposed) return r;
 			ReleaseLock(r.Lock, type);
 			r.Clear(context);
 
@@ -231,29 +227,25 @@ namespace Open.Threading
 			//	Debug.Fail("Attempting to dispose a tracker that is still availalbe in the pool.");
 		}
 
-		private bool AcquireLock(ReaderWriterLockSlim target, LockType type, int? millisecondsTimeout = null, bool throwsOnTimeout = false)
+		private bool AcquireLock(ReaderWriterLockSlim? target, LockType type, int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (target == null)
+			if (target is null)
 				throw new ArgumentNullException(nameof(target));
 			ReaderWriterLockSlimExensions.ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
 
-			switch (type)
+			return type switch
 			{
-				case LockType.Read:
-					return target.EnterReadLock(millisecondsTimeout, throwsOnTimeout);
-				case LockType.ReadUpgradeable:
-					return target.EnterUpgradeableReadLock(millisecondsTimeout, throwsOnTimeout);
-				case LockType.Write:
-					return target.EnterWriteLock(millisecondsTimeout, throwsOnTimeout);
-			}
-
-			return false;
+				LockType.Read => target.EnterReadLock(millisecondsTimeout, throwsOnTimeout),
+				LockType.ReadUpgradeable => target.EnterUpgradeableReadLock(millisecondsTimeout, throwsOnTimeout),
+				LockType.Write => target.EnterWriteLock(millisecondsTimeout, throwsOnTimeout),
+				_ => false,
+			};
 		}
 
-		private void ReleaseLock(ReaderWriterLockSlim target, LockType type)
+		private void ReleaseLock(ReaderWriterLockSlim? target, LockType type)
 		{
-			if (target == null) return;
+			if (target is null) return;
 			switch (type)
 			{
 				case LockType.Read:
@@ -279,43 +271,52 @@ namespace Open.Threading
 		// Funnel all delegates through here to ensure proper procedure for getting and releasing locks.
 		private bool Execute(TKey key, LockType type, Action<ReaderWriterLockSlim> closure, int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (key == null)
+			if (key is null)
 				throw new ArgumentNullException(nameof(key));
-			if (closure == null)
+			if (closure is null)
 				throw new ArgumentNullException(nameof(closure));
 			ReaderWriterLockSlimExensions.ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
 
-			var context = ContextPool.Take();
-
-			var rwlock = GetLock(key, type, context, millisecondsTimeout, throwsOnTimeout);
-			if (rwlock == null)
-				return false;
-
-			try
+			return ContextPool.Rent(context =>
 			{
-				closure(rwlock.Lock);
-			}
-			finally
-			{
+				var rwlock = GetLock(key, type, context, millisecondsTimeout, throwsOnTimeout);
+				if (rwlock?.Lock is null)
+					return false;
+
 				try
 				{
-					ReleaseLock(rwlock.Lock, type);
-					rwlock.Clear(context);
-					ContextPool.Give(context);
+					closure(rwlock.Lock);
 				}
-				catch (Exception ex)
+				finally
 				{
-					Debug.WriteLine(ex.ToString());
-					// The above cannot fail or dire concequences...
-					Debugger.Break();
-					throw;
+					try
+					{
+						ReleaseLock(rwlock.Lock, type);
+						rwlock.Clear(context);
+					}
+					catch (Exception ex)
+					{
+						Debug.WriteLine(ex.ToString());
+						// The above cannot fail or dire concequences...
+						Debugger.Break();
+						throw;
+					}
 				}
-			}
-			return true;
+				return true;
+			});
 		}
 
-		private bool Execute<T>(TKey key, LockType type, out T result, Func<ReaderWriterLockSlim, T> closure, int? millisecondsTimeout = null, bool throwsOnTimeout = false)
+		private bool Execute<T>(
+			TKey key,
+			LockType type,
+#if NETSTANDARD2_1
+			[NotNullWhen(true)]
+#endif
+			out T result,
+			Func<ReaderWriterLockSlim, T> closure,
+			int? millisecondsTimeout = null,
+			bool throwsOnTimeout = false)
 		{
 			T r = default;
 
@@ -324,7 +325,7 @@ namespace Open.Threading
 				r = closure(rwlock);
 			}, millisecondsTimeout, throwsOnTimeout);
 
-			result = r;
+			result = r!;
 
 			return acquired;
 		}
@@ -332,7 +333,7 @@ namespace Open.Threading
 		// Funnel all delegates through here to ensure proper procedure for getting and releasing locks.
 		private bool Execute(TKey key, LockType type, Action closure, int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (closure == null)
+			if (closure is null)
 				throw new ArgumentNullException(nameof(closure));
 			Contract.EndContractBlock();
 
@@ -342,7 +343,7 @@ namespace Open.Threading
 		// Funnel all delegates through here to ensure proper procedure for getting and releasing locks.
 		private bool Execute<T>(TKey key, LockType type, out T result, Func<T> closure, int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (closure == null)
+			if (closure is null)
 				throw new ArgumentNullException(nameof(closure));
 			Contract.EndContractBlock();
 
@@ -447,7 +448,7 @@ namespace Open.Threading
 		/// <returns>Returns false if a timeout is reached.</returns>
 		protected bool WriteConditional(TKey key, Func<bool, bool> condition, Action closure, int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (condition == null)
+			if (condition is null)
 				throw new ArgumentNullException(nameof(condition));
 			Contract.EndContractBlock();
 
@@ -480,7 +481,7 @@ namespace Open.Threading
 			TKey key, Func<LockType, bool> condition, Action closure,
 			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (condition == null)
+			if (condition is null)
 				throw new ArgumentNullException(nameof(condition));
 			Contract.EndContractBlock();
 
@@ -515,7 +516,7 @@ namespace Open.Threading
 			TKey key, Func<LockType, bool> condition, Func<T> closure,
 			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (condition == null)
+			if (condition is null)
 				throw new ArgumentNullException(nameof(condition));
 			Contract.EndContractBlock();
 
@@ -553,7 +554,7 @@ namespace Open.Threading
 			TKey key, Func<bool> condition, Action closure,
 			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (condition == null)
+			if (condition is null)
 				throw new ArgumentNullException(nameof(condition));
 			Contract.EndContractBlock();
 
@@ -586,7 +587,7 @@ namespace Open.Threading
 			TKey key, Func<bool> condition, Func<T> closure,
 			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (condition == null)
+			if (condition is null)
 				throw new ArgumentNullException(nameof(condition));
 			Contract.EndContractBlock();
 
@@ -620,7 +621,7 @@ namespace Open.Threading
 			TKey key, Func<LockType, bool> condition, Action closure,
 			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (condition == null)
+			if (condition is null)
 				throw new ArgumentNullException(nameof(condition));
 			Contract.EndContractBlock();
 
@@ -644,7 +645,7 @@ namespace Open.Threading
 			TKey key, ref T result, Func<LockType, bool> condition, Func<T> closure,
 			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (condition == null)
+			if (condition is null)
 				throw new ArgumentNullException(nameof(condition));
 			Contract.EndContractBlock();
 
@@ -662,11 +663,11 @@ namespace Open.Threading
 			// Search for dormant locks.
 			foreach (var key in Locks.Keys.ToArray())
 			{
-				if (key == null)
+				if (key is null)
 					throw new NullReferenceException();
 
-				if (!Locks.TryGetValue(key, out var tempLock) || tempLock == null) continue;
-				if (!tempLock.CanDispose || !Locks.TryRemove(key, out tempLock) || tempLock == null) continue;
+				if (!Locks.TryGetValue(key, out var tempLock) || tempLock is null) continue;
+				if (!tempLock.CanDispose || !Locks.TryRemove(key, out tempLock) || tempLock is null) continue;
 
 #if DEBUG
 				if (tempLock.WasDisposed && !WasDisposed)
@@ -714,7 +715,7 @@ namespace Open.Threading
 
 		//		private void TrimPool<T>(ConcurrentQueue<T> target, int maxCount = 0, bool dispose = false, bool allowExceptions = true)
 		//		{
-		//			if (target == null)
+		//			if (target is null)
 		//				throw new ArgumentNullException(nameof(target));
 		//			Contract.EndContractBlock();
 

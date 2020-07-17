@@ -1,10 +1,10 @@
 ﻿/*!
  * @author electricessence / https://github.com/electricessence/
- * Licensing: MIT https://github.com/electricessence/Open/blob/dotnet-core/LICENSE.md
  * Some portions of this code are based upon code from Stephen Cleary's Nitro library.
  */
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Threading;
 
@@ -20,7 +20,7 @@ namespace Open.Threading
 		/// <returns></returns>
 		public static bool IsLockFree(this ReaderWriterLockSlim target)
 		{
-			if (target == null)
+			if (target is null)
 				throw new NullReferenceException();
 			Contract.EndContractBlock();
 
@@ -51,12 +51,12 @@ namespace Open.Threading
 		public static bool EnterReadLock(this ReaderWriterLockSlim target,
 			int? millisecondsTimeout, bool throwsOnTimeout = false)
 		{
-			if (target == null)
+			if (target is null)
 				throw new NullReferenceException();
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
 
-			if (millisecondsTimeout == null)
+			if (millisecondsTimeout is null)
 				target.EnterReadLock();
 			else if (!target.TryEnterReadLock(millisecondsTimeout.Value))
 			{
@@ -77,12 +77,12 @@ namespace Open.Threading
 		public static bool EnterUpgradeableReadLock(this ReaderWriterLockSlim target,
 			int? millisecondsTimeout, bool throwsOnTimeout = false)
 		{
-			if (target == null)
+			if (target is null)
 				throw new NullReferenceException();
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
 
-			if (millisecondsTimeout == null)
+			if (millisecondsTimeout is null)
 				target.EnterUpgradeableReadLock();
 			else if (!target.TryEnterUpgradeableReadLock(millisecondsTimeout.Value))
 			{
@@ -103,12 +103,12 @@ namespace Open.Threading
 		public static bool EnterWriteLock(this ReaderWriterLockSlim target,
 			int? millisecondsTimeout, bool throwsOnTimeout = false)
 		{
-			if (target == null)
+			if (target is null)
 				throw new NullReferenceException();
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
 
-			if (millisecondsTimeout == null)
+			if (millisecondsTimeout is null)
 				target.EnterWriteLock();
 			else if (!target.TryEnterWriteLock(millisecondsTimeout.Value))
 			{
@@ -134,9 +134,9 @@ namespace Open.Threading
 			Action closure,
 			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (target == null)
+			if (target is null)
 				throw new NullReferenceException();
-			if (closure == null)
+			if (closure is null)
 				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
@@ -205,9 +205,9 @@ namespace Open.Threading
 			out T result, Func<T> closure,
 			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (target == null)
+			if (target is null)
 				throw new NullReferenceException();
-			if (closure == null)
+			if (closure is null)
 				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
@@ -241,9 +241,9 @@ namespace Open.Threading
 			Action closure,
 			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (target == null)
+			if (target is null)
 				throw new NullReferenceException();
-			if (closure == null)
+			if (closure is null)
 				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
@@ -277,9 +277,9 @@ namespace Open.Threading
 			out T result, Func<T> closure,
 			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (target == null)
+			if (target is null)
 				throw new NullReferenceException();
-			if (closure == null)
+			if (closure is null)
 				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
@@ -312,9 +312,9 @@ namespace Open.Threading
 			Action closure,
 			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (target == null)
+			if (target is null)
 				throw new NullReferenceException();
-			if (closure == null)
+			if (closure is null)
 				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
@@ -347,9 +347,9 @@ namespace Open.Threading
 			out T result, Func<T> closure,
 			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (target == null)
+			if (target is null)
 				throw new NullReferenceException();
-			if (closure == null)
+			if (closure is null)
 				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
@@ -383,11 +383,11 @@ namespace Open.Threading
 			Func<bool, bool> condition, Action closure,
 			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (target == null)
+			if (target is null)
 				throw new NullReferenceException();
-			if (condition == null)
+			if (condition is null)
 				throw new ArgumentNullException(nameof(condition));
-			if (closure == null)
+			if (closure is null)
 				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
@@ -422,11 +422,11 @@ namespace Open.Threading
 			ref T result, Func<bool, bool> condition, Func<T> closure,
 			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (target == null)
+			if (target is null)
 				throw new NullReferenceException();
-			if (condition == null)
+			if (condition is null)
 				throw new ArgumentNullException(nameof(condition));
-			if (closure == null)
+			if (closure is null)
 				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
@@ -464,11 +464,11 @@ namespace Open.Threading
 			Func<LockType, bool> condition, Action closure,
 			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (target == null)
+			if (target is null)
 				throw new NullReferenceException();
-			if (condition == null)
+			if (condition is null)
 				throw new ArgumentNullException(nameof(condition));
-			if (closure == null)
+			if (closure is null)
 				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
@@ -505,11 +505,11 @@ namespace Open.Threading
 			ref T result, Func<LockType, bool> condition, Func<T> closure,
 			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (target == null)
+			if (target is null)
 				throw new NullReferenceException();
-			if (condition == null)
+			if (condition is null)
 				throw new ArgumentNullException(nameof(condition));
-			if (closure == null)
+			if (closure is null)
 				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
@@ -550,11 +550,11 @@ namespace Open.Threading
 			Func<bool> condition, Action closure,
 			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (target == null)
+			if (target is null)
 				throw new NullReferenceException();
-			if (condition == null)
+			if (condition is null)
 				throw new ArgumentNullException(nameof(condition));
-			if (closure == null)
+			if (closure is null)
 				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
@@ -584,11 +584,11 @@ namespace Open.Threading
 			ref T result, Func<bool> condition, Func<T> closure,
 			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (target == null)
+			if (target is null)
 				throw new NullReferenceException();
-			if (condition == null)
+			if (condition is null)
 				throw new ArgumentNullException(nameof(condition));
-			if (closure == null)
+			if (closure is null)
 				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
@@ -606,7 +606,6 @@ namespace Open.Threading
 
 			if (written)
 				result = r;
-
 
 			return readLocked && writeLocked;
 		}
@@ -626,11 +625,11 @@ namespace Open.Threading
 			Func<LockType, bool> condition, Action closure,
 			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (target == null)
+			if (target is null)
 				throw new NullReferenceException();
-			if (condition == null)
+			if (condition is null)
 				throw new ArgumentNullException(nameof(condition));
-			if (closure == null)
+			if (closure is null)
 				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
@@ -656,11 +655,11 @@ namespace Open.Threading
 			ref T result, Func<LockType, bool> condition, Func<T> closure,
 			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
-			if (target == null)
+			if (target is null)
 				throw new NullReferenceException();
-			if (condition == null)
+			if (condition is null)
 				throw new ArgumentNullException(nameof(condition));
-			if (closure == null)
+			if (closure is null)
 				throw new ArgumentNullException(nameof(closure));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
@@ -677,26 +676,53 @@ namespace Open.Threading
 		/// <param name="target">The ReaderWriterLockSlim to use for locking.</param>
 		/// <param name="getValue">The function to get the value.</param>
 		/// <param name="createValue">The create value factory.</param>
-		/// <param name="millisecondsTimeout">The number of milliseconds to to wait before timing out.  Null value will wait indefinitely.</param>
-		/// <param name="throwsOnTimeout">If true, will throw an timeout exception if the timeout is reached.</param>
-		/// <returns></returns>
+		/// <returns>The value acquired.</returns>
 		public static T GetOrCreateValue<T>(this ReaderWriterLockSlim target,
-			Func<T> getValue, Func<T> createValue,
-			int? millisecondsTimeout = null, bool throwsOnTimeout = false)
+			Func<T?> getValue, Func<T> createValue)
 			where T : class
 		{
-			if (target == null)
+			if (target is null)
 				throw new NullReferenceException();
-			if (getValue == null)
+			if (getValue is null)
 				throw new ArgumentNullException(nameof(getValue));
-			if (createValue == null)
+			if (createValue is null)
+				throw new ArgumentNullException(nameof(createValue));
+			Contract.EndContractBlock();
+
+			T? result = null;
+			target.ReadWriteConditionalOptimized(
+				ref result, lockType => (result = getValue()) is null, createValue);
+
+			return result!;
+		}
+
+		/// <summary>
+		/// If the getValue delegate returns null, the value is acquired from the createValue delegate.
+		/// </summary>
+		/// <typeparam name="T">The return type.</typeparam>
+		/// <param name="target">The ReaderWriterLockSlim to use for locking.</param>
+		/// <param name="getValue">The function to get the value.</param>
+		/// <param name="createValue">The create value factory.</param>
+		/// <param name="millisecondsTimeout">The number of milliseconds to to wait before timing out.  Null value will wait indefinitely.</param>
+		/// <param name="throwsOnTimeout">If true, will throw an timeout exception if the timeout is reached.</param>
+		/// <returns>The value acquired.</returns>
+		public static T? GetOrCreateValue<T>(this ReaderWriterLockSlim target,
+			Func<T?> getValue, Func<T> createValue,
+			int? millisecondsTimeout, bool throwsOnTimeout = false)
+			where T : class
+		{
+			if (target is null)
+				throw new NullReferenceException();
+			if (getValue is null)
+				throw new ArgumentNullException(nameof(getValue));
+			if (createValue is null)
 				throw new ArgumentNullException(nameof(createValue));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
 
-			T result = null;
+			T? result = null;
 			target.ReadWriteConditionalOptimized(
-				ref result, lockType => (result = getValue()) == null, createValue,
+				ref result, lockType => (result = getValue()) is null, createValue,
 				millisecondsTimeout,
 				throwsOnTimeout);
 
@@ -706,21 +732,28 @@ namespace Open.Threading
 		/// <summary>
 		/// ReaderWriterLockSlim extension for synchronizing read access.
 		/// </summary>
+		/// <param name="target">The ReaderWriterLockSlim to use for locking.</param>
+		/// <param name="result">The result if a lock is acquired..</param>
+		/// <param name="valueFactory">The value factory.</param>
+		/// <param name="millisecondsTimeout">The number of milliseconds to to wait before timing out.  Null value will wait indefinitely.</param>
 		/// <returns>Returns false if a timeout is reached.</returns>
 		public static bool TryReadValue<T>(this ReaderWriterLockSlim target,
+#if NETSTANDARD2_1
+			[NotNullWhen(true)]
+#endif
 			out T result, Func<T> valueFactory,
 			int? millisecondsTimeout = null)
 		{
-			if (target == null)
+			if (target is null)
 				throw new NullReferenceException();
-			if (valueFactory == null)
+			if (valueFactory is null)
 				throw new ArgumentNullException(nameof(valueFactory));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
 
 			T r = default;
 			var lockHeld = target.Read(() => r = valueFactory(), millisecondsTimeout);
-			result = r;
+			result = r!;
 			return lockHeld;
 		}
 
@@ -729,19 +762,22 @@ namespace Open.Threading
 		/// </summary>
 		/// <returns>Returns false if a timeout is reached.</returns>
 		public static bool TryWriteValue<T>(this ReaderWriterLockSlim target,
+#if NETSTANDARD2_1
+			[NotNullWhen(true)]
+#endif
 			out T result, Func<T> valueFactory,
 			int? millisecondsTimeout = null)
 		{
-			if (target == null)
+			if (target is null)
 				throw new NullReferenceException();
-			if (valueFactory == null)
+			if (valueFactory is null)
 				throw new ArgumentNullException(nameof(valueFactory));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
 
 			T r = default;
 			var lockHeld = target.Write(() => r = valueFactory(), millisecondsTimeout);
-			result = r;
+			result = r!;
 			return lockHeld;
 		}
 
@@ -752,16 +788,16 @@ namespace Open.Threading
 			Func<T> valueFactory,
 			int? millisecondsTimeout = null)
 		{
-			if (target == null)
+			if (target is null)
 				throw new NullReferenceException();
-			if (valueFactory == null)
+			if (valueFactory is null)
 				throw new ArgumentNullException(nameof(valueFactory));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
 
 			T result = default;
 			target.Read(() => result = valueFactory(), millisecondsTimeout, true);
-			return result;
+			return result!;
 		}
 
 		/// <summary>
@@ -771,16 +807,16 @@ namespace Open.Threading
 			Func<T> valueFactory,
 			int? millisecondsTimeout = null)
 		{
-			if (target == null)
+			if (target is null)
 				throw new NullReferenceException();
-			if (valueFactory == null)
+			if (valueFactory is null)
 				throw new ArgumentNullException(nameof(valueFactory));
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
 
 			T result = default;
 			target.Write(() => result = valueFactory(), millisecondsTimeout, true);
-			return result;
+			return result!;
 		}
 
 

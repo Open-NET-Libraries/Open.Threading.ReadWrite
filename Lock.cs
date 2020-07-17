@@ -38,7 +38,7 @@ namespace Open.Threading
 
 		}
 
-		protected override void OnDispose(object target)
+		protected override void OnDispose(object? target)
 		{
 			if (target != null) Monitor.Exit(target);
 		}
