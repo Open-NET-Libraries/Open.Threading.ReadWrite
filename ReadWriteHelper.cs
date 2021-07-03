@@ -19,7 +19,7 @@ namespace Open.Threading
 
 		class ReaderWriterLockTracker : DisposableBase
 		{
-			readonly HashSet<object> _registry = new HashSet<object>();
+			readonly HashSet<object> _registry = new();
 
 			public ReaderWriterLockSlim? Lock;
 
@@ -85,10 +85,10 @@ namespace Open.Threading
 		readonly ConcurrentQueueObjectPool<ReaderWriterLockTracker> LockPool;
 
 		readonly ConcurrentDictionary<TKey, ReaderWriterLockTracker> Locks
-			= new ConcurrentDictionary<TKey, ReaderWriterLockTracker>();
+			= new();
 
 		readonly ReaderWriterLockSlim CleanupManager
-			= new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
+			= new(LockRecursionPolicy.SupportsRecursion);
 
 		public ReadWriteHelper() : this(false)
 		{
@@ -191,7 +191,7 @@ namespace Open.Threading
 					try
 					{
 						// result.Lock will only be null if the tracker has been disposed.
-						lockHeld = AcquireLock(result.Lock, type, millisecondsTimeout, throwsOnTimeout);
+						lockHeld = ReadWriteHelper<TKey>.AcquireLock(result.Lock, type, millisecondsTimeout, throwsOnTimeout);
 					}
 					catch (LockRecursionException lrex)
 					{
@@ -227,7 +227,7 @@ namespace Open.Threading
 			//	Debug.Fail("Attempting to dispose a tracker that is still availalbe in the pool.");
 		}
 
-		private bool AcquireLock(ReaderWriterLockSlim? target, LockType type, int? millisecondsTimeout = null, bool throwsOnTimeout = false)
+		private static bool AcquireLock(ReaderWriterLockSlim? target, LockType type, int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 		{
 			if (target is null)
 				throw new ArgumentNullException(nameof(target));
@@ -318,7 +318,7 @@ namespace Open.Threading
 			int? millisecondsTimeout = null,
 			bool throwsOnTimeout = false)
 		{
-			T r = default;
+			T r = default!;
 
 			var acquired = Execute(key, type, (rwlock) =>
 			{

@@ -37,7 +37,7 @@ namespace Open.Threading
 	/// </summary>
 	public sealed class UpgradableReadLock : LockBase<ReaderWriterLockSlim>
 	{
-		readonly object _sync = new object();
+		readonly object _sync = new();
 		WriteLock? _upgraded;
 		public UpgradableReadLock(ReaderWriterLockSlim target, int? millisecondsTimeout = null, bool throwIfTimeout = true)
 		: base(target, target.EnterUpgradeableReadLock(millisecondsTimeout, throwIfTimeout))

@@ -751,7 +751,7 @@ namespace Open.Threading
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
 
-			T r = default;
+			T r = default!;
 			var lockHeld = target.Read(() => r = valueFactory(), millisecondsTimeout);
 			result = r!;
 			return lockHeld;
@@ -775,7 +775,7 @@ namespace Open.Threading
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
 
-			T r = default;
+			T r = default!;
 			var lockHeld = target.Write(() => r = valueFactory(), millisecondsTimeout);
 			result = r!;
 			return lockHeld;
@@ -795,7 +795,7 @@ namespace Open.Threading
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
 
-			T result = default;
+			T result = default!;
 			target.Read(() => result = valueFactory(), millisecondsTimeout, true);
 			return result!;
 		}
@@ -814,7 +814,7 @@ namespace Open.Threading
 			ValidateMillisecondsTimeout(millisecondsTimeout);
 			Contract.EndContractBlock();
 
-			T result = default;
+			T result = default!;
 			target.Write(() => result = valueFactory(), millisecondsTimeout, true);
 			return result!;
 		}
