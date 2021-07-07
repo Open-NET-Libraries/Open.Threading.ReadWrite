@@ -81,7 +81,7 @@ namespace Open.Threading
 		}
 
 
-		readonly OptimisticArrayObjectPool<object> ContextPool;
+		readonly IObjectPool<object> ContextPool;
 		readonly ConcurrentQueueObjectPool<ReaderWriterLockTracker> LockPool;
 
 		readonly ConcurrentDictionary<TKey, ReaderWriterLockTracker> Locks
@@ -102,15 +102,15 @@ namespace Open.Threading
 				? LockRecursionPolicy.SupportsRecursion
 				: LockRecursionPolicy.NoRecursion;
 
-			ContextPool = OptimisticArrayObjectPool.Create<object>();
+			ContextPool = OptimisticArrayObjectPool.Create<object>(32);
 
 #if DEBUG
-			void recycle(ReaderWriterLockTracker rwlt) => Debug.Assert(rwlt.Lock.IsLockFree());
+			static void recycle(ReaderWriterLockTracker rwlt) => Debug.Assert(rwlt.Lock!.IsLockFree());
 #else
 			Action<ReaderWriterLockTracker>? recycle = null;
 #endif
 			// ReSharper disable once ExpressionIsAlwaysNull
-			LockPool = new ConcurrentQueueObjectPool<ReaderWriterLockTracker>(Factory, recycle, d => d.Dispose(), 1000);
+			LockPool = new ConcurrentQueueObjectPool<ReaderWriterLockTracker>(Factory, recycle, d => d.Dispose(), 256);
 		}
 
 		ReaderWriterLockTracker Factory()
