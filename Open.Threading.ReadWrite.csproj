@@ -18,7 +18,7 @@
 		<PackageProjectUrl>https://github.com/Open-NET-Libraries/Open.Threading.ReadWrite/</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Open-NET-Libraries/Open.Threading.ReadWrite/</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
-		<Version>1.4.6</Version>
+		<Version>1.4.7</Version>
 		<PackageReleaseNotes></PackageReleaseNotes>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
@@ -41,7 +41,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Open.Disposable.ObjectPools" Version="2.8.0" />
+		<PackageReference Include="Open.Disposable.ObjectPools" Version="2.8.1" />
 	</ItemGroup>
 
 </Project>
