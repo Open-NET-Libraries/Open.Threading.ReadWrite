@@ -41,7 +41,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Open.Disposable.ObjectPools" Version="2.8.1" />
+		<PackageReference Include="Open.Disposable.ObjectPools" Version="2.8.2" />
 	</ItemGroup>
 
 </Project>
