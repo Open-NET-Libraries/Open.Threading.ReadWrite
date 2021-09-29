@@ -1,6 +1,6 @@
 # The MIT License (MIT)
 
-## Copyright (c) 2017 Oren J. Ferrari
+## Copyright (c) 2021 Oren J. Ferrari
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
