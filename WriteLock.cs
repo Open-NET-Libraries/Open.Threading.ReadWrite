@@ -41,10 +41,7 @@ namespace Open.Threading
 		{
 		}
 
-		protected override void OnDispose(ReaderWriterLockSlim? target)
-		{
-			target?.ExitWriteLock();
-		}
+		protected override void OnDispose(ReaderWriterLockSlim? target) => target?.ExitWriteLock();
 	}
 
 }

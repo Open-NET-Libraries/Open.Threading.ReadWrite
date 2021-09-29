@@ -1,9 +1,8 @@
-﻿namespace Open.Threading
+﻿namespace Open.Threading;
+
+public enum LockType : byte
 {
-	public enum LockType : byte
-	{
-		Read,
-		ReadUpgradeable,
-		Write
-	}
+	Read,
+	ReadUpgradeable,
+	Write
 }
