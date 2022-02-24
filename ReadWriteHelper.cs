@@ -16,7 +16,6 @@ namespace Open.Threading;
 /// </summary>
 public class ReadWriteHelper<TKey> : DeferredCleanupBase
 {
-
 	class ReaderWriterLockTracker : DisposableBase
 	{
 		readonly HashSet<object> _registry = new();
@@ -77,7 +76,6 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 		}
 	}
 
-
 	readonly IObjectPool<object> ContextPool;
 	readonly ConcurrentQueueObjectPool<ReaderWriterLockTracker> LockPool;
 
@@ -104,7 +102,7 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 #if DEBUG
 		static void recycle(ReaderWriterLockTracker rwlt) => Debug.Assert(rwlt.Lock!.IsLockFree());
 #else
-			Action<ReaderWriterLockTracker>? recycle = null;
+		Action<ReaderWriterLockTracker>? recycle = null;
 #endif
 		// ReSharper disable once ExpressionIsAlwaysNull
 		LockPool = new ConcurrentQueueObjectPool<ReaderWriterLockTracker>(Factory, recycle, d => d.Dispose(), 256);
@@ -139,25 +137,24 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 		var r = CleanupManager.ReadValue(
 			() =>
 			{
-					// It is possible that a read could be acquired while disposing just before the dispose.
-					if (WasDisposed)
+				// It is possible that a read could be acquired while disposing just before the dispose.
+				if (WasDisposed)
 					return null;
 
-					// Get a tracker...
-					ReaderWriterLockTracker result;
+				// Get a tracker...
+				ReaderWriterLockTracker result;
 				{
-						// Compare the tracker retrieved with the one created...
-						ReaderWriterLockTracker? created = null;
+					// Compare the tracker retrieved with the one created...
+					ReaderWriterLockTracker? created = null;
 					do
 					{
-						result = Locks.GetOrAdd(key, k => created = LockPool.Take());
+						result = Locks.GetOrAdd(key, _ => created = LockPool.Take());
 					}
-						// Safeguard against rare case of when a disposed tracker is retained via an exception (possibly?). :(
-						while (!WasDisposed && result.WasDisposed);
+					// Safeguard against rare case of when a disposed tracker is retained via an exception (possibly?). :(
+					while (!WasDisposed && result.WasDisposed);
 
-
-						// If the one created is not the one retrieved, go ahead and add it to the pool so it doesn't go to waste.
-						if (created is not null && created != result)
+					// If the one created is not the one retrieved, go ahead and add it to the pool so it doesn't go to waste.
+					if (created is not null && created != result)
 					{
 						if (WasDisposed)
 							created.Dispose();
@@ -165,8 +162,8 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 							LockPool.Give(created);
 					}
 
-						// This should never get out of sync, but just in case...
-						var rlock = result.Lock;
+					// This should never get out of sync, but just in case...
+					var rlock = result.Lock;
 					if (rlock is null || result.WasDisposed)
 					{
 						Debug.Fail("A lock tracker was retained after it was disposed.");
@@ -176,25 +173,25 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 					{
 						if (rlock.IsWriteLockHeld && type == LockType.Read)
 							Debugger.Break(); // 
-						}
+					}
 				}
 
-					// Quick check to avoid further processes...
-					if (WasDisposed)
+				// Quick check to avoid further processes...
+				if (WasDisposed)
 					return null;
 
 				var lockHeld = false;
 				if (!result.Reserve(context)) return null;
 				try
 				{
-						// result.Lock will only be null if the tracker has been disposed.
-						lockHeld = ReadWriteHelper<TKey>.AcquireLock(result.Lock, type, millisecondsTimeout, throwsOnTimeout);
+					// result.Lock will only be null if the tracker has been disposed.
+					lockHeld = ReadWriteHelper<TKey>.AcquireLock(result.Lock, type, millisecondsTimeout, throwsOnTimeout);
 				}
 				catch (LockRecursionException lrex)
 				{
 					Debug.WriteLine(lrex.ToString());
 					Debugger.Break(); // Need to be able to track down source.
-						throw;
+					throw;
 				}
 				finally
 				{
@@ -212,7 +209,6 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 		r.Clear(context);
 
 		return null;
-
 	}
 
 	void Debug_TrackerDisposedWhileInUse(object sender, EventArgs e)
@@ -264,7 +260,6 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 		SetCleanup(CleanupMode.ImmediateDeferredIfPastDue);
 	}
 
-
 	// Funnel all delegates through here to ensure proper procedure for getting and releasing locks.
 	private bool Execute(TKey key, LockType type, Action<ReaderWriterLockSlim> closure, int? millisecondsTimeout = null, bool throwsOnTimeout = false)
 	{
@@ -295,8 +290,8 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 				catch (Exception ex)
 				{
 					Debug.WriteLine(ex.ToString());
-						// The above cannot fail or dire concequences...
-						Debugger.Break();
+					// The above cannot fail or dire concequences...
+					Debugger.Break();
 					throw;
 				}
 			}
@@ -317,10 +312,10 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 	{
 		T r = default!;
 
-		var acquired = Execute(key, type, (rwlock) =>
-		{
-			r = closure(rwlock);
-		}, millisecondsTimeout, throwsOnTimeout);
+		var acquired = Execute(key, type,
+			(rwlock) => r = closure(rwlock),
+			millisecondsTimeout,
+			throwsOnTimeout);
 
 		result = r!;
 
@@ -334,7 +329,7 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 			throw new ArgumentNullException(nameof(closure));
 		Contract.EndContractBlock();
 
-		return Execute(key, type, (rwlock) => closure(), millisecondsTimeout, throwsOnTimeout);
+		return Execute(key, type, (_) => closure(), millisecondsTimeout, throwsOnTimeout);
 	}
 
 	// Funnel all delegates through here to ensure proper procedure for getting and releasing locks.
@@ -344,7 +339,7 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 			throw new ArgumentNullException(nameof(closure));
 		Contract.EndContractBlock();
 
-		return Execute(key, type, out result, (rwlock) => closure(), millisecondsTimeout, throwsOnTimeout);
+		return Execute(key, type, out result, (_) => closure(), millisecondsTimeout, throwsOnTimeout);
 	}
 
 	#region Read/Write Public Interface
@@ -492,8 +487,8 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 	/// Method for synchronizing write access.  Starts by executing the condition with a read lock.  Then if necessary after releasing the read lock, acquires a write lock.
 	/// Note: Passing a LockType to the condition when a lock is acquired helps if it is important to the cosuming logic to avoid recursive locking.
 	/// </summary>
-	/// <param name="key">The key to lock by.</param>
 	/// <param name="result">The result from the operation.</param>
+	/// <param name="key">The key to lock by.</param>
 	/// <param name="condition">Takes a bool where false means a read lock and true means a write lock.  Returns true if it should execute the query Action.</param>
 	/// <param name="closure">Action to execute once a lock is acquired.</param>
 	/// <param name="millisecondsTimeout">Indicates if and for how long a timeout is used to acquire a lock.</param>
@@ -551,9 +546,11 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 		// Since read upgradable ensures that no changes should be made to the condition, then it is acceptable to not recheck the condition after lock...
 		var readLocked = ReadUpgradeable(key, (rwlock) =>
 		{
-			if (condition())
-					// Synchronize lock acquisistion.
-					writeLocked = rwlock.Write(closure, millisecondsTimeout, throwsOnTimeout);
+			if (!condition())
+				return;
+
+			// Synchronize lock acquisistion.
+			writeLocked = rwlock.Write(closure, millisecondsTimeout, throwsOnTimeout);
 		});
 
 		return readLocked && writeLocked;
@@ -586,8 +583,8 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 		var readLocked = ReadUpgradeable(key, (rwlock) =>
 		{
 			if (!condition()) return;
-				// Synchronize lock acquisistion.
-				writeLocked = rwlock.Write(out r, closure, millisecondsTimeout, throwsOnTimeout);
+			// Synchronize lock acquisistion.
+			writeLocked = rwlock.Write(out r, closure, millisecondsTimeout, throwsOnTimeout);
 			written = true;
 		});
 		if (written) result = r;
@@ -643,8 +640,6 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 	}
 	#endregion
 
-
-
 	#region Cleanpup & Dispose
 	private void CleanupInternal()
 	{
@@ -688,8 +683,10 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 				}
 			}
 			else
+			{
 				// Just in case something happens on remove...
 				Locks.TryAdd(key, tempLock);
+			}
 			//}
 		}
 	}
@@ -744,9 +741,8 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 
 	protected override void OnCleanup()
 	{
-
 		// Prevents new locks from being acquired while a cleanup is active.
-		var lockHeld = CleanupManager.WriteConditional(write => !WasDisposed, () =>
+		var lockHeld = CleanupManager.WriteConditional(_ => !WasDisposed, () =>
 		{
 			UpdateCleanupDelay();
 
@@ -755,15 +751,14 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 			var count = Locks.Count;
 			var maxCount = Math.Min(count, 100);
 
-				//ContextPool.TrimTo(maxCount * 2);
-				LockPool.TrimTo(maxCount);
+			//ContextPool.TrimTo(maxCount * 2);
+			LockPool.TrimTo(maxCount);
 
-				//if (Debugger.IsAttached && LockPool.Any(l => l.WasDisposed))
-				//	Debug.Fail("LockPool is retaining a disposed tracker.");
+			//if (Debugger.IsAttached && LockPool.Any(l => l.WasDisposed))
+			//	Debug.Fail("LockPool is retaining a disposed tracker.");
 
-				if (count == 0)
+			if (count == 0)
 				ClearCleanup();
-
 		}, 10000); // Use a timeout to ensure a busy collection isn't over locked.
 
 		if (WasDisposed) return;
@@ -782,7 +777,7 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 		{
 			CleanupInternal();
 			Locks.Clear(); // Some locks may be removed, but releasing will still occur.
-				lockPool.Dispose();
+			lockPool.Dispose();
 		}, 1000); // We don't want to block for any reason for too long.
 				  // Dispose shouldn't be called without this being able to be cleaned.
 
@@ -792,7 +787,6 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 		Locks.Clear();
 		ContextPool.Dispose();
 		if (!lockHeld) LockPool.Dispose();
-
 	}
 	#endregion
 

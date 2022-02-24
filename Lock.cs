@@ -4,9 +4,8 @@ using System.Threading;
 namespace Open.Threading;
 
 /// <summary>
-/// A simple lock class for allowing for a timeout.  If no timeout is desired, then simply use the lock(){} statement.
-/// 
-/// Example:
+/// <para>A simple lock class for allowing for a timeout.  If no timeout is desired, then simply use the lock(){} statement.</para>
+/// <para>Example:</para>
 /// <code>
 /// using(new Lock(sync,1000)) // If the timeout expires an exception is thrown.
 /// {
@@ -33,9 +32,10 @@ public class Lock : LockBase<object>
 	: base(target, Monitor.TryEnter(target, millisecondsTimeout))
 	{
 		if (!LockHeld && throwIfTimeout)
+		{
 			throw new TimeoutException(
 				$"Could not acquire a lock within the timeout specified. (millisecondsTimeout={millisecondsTimeout})");
-
+		}
 	}
 
 	protected override void OnDispose(object? target)

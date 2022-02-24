@@ -4,10 +4,11 @@ using System.Threading;
 namespace Open.Threading;
 
 /// <summary>
+/// <para>
 /// A simple upgragable read lock class which also allows for a timeout.
 /// Extensions are available for use with a ReaderWriterLockSlim.
-/// 
-/// Example:
+/// </para>
+/// <para>Example:</para>
 /// <code>
 /// using(readWriteLockSlimInstance.WriteLock())
 /// {

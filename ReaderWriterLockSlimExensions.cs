@@ -34,13 +34,11 @@ public static class ReaderWriterLockSlimExensions
 			&& !target.IsWriteLockHeld;
 	}
 
-
 	internal static void ValidateMillisecondsTimeout(int? millisecondsTimeout)
 	{
 		if ((millisecondsTimeout ?? 0) < 0)
 			throw new ArgumentOutOfRangeException(nameof(millisecondsTimeout), millisecondsTimeout, "Cannot be a negative value.");
 	}
-
 
 	/// <summary>
 	/// Simplifies entering a timeout or no timeout based read lock.
@@ -55,14 +53,14 @@ public static class ReaderWriterLockSlimExensions
 		Contract.EndContractBlock();
 
 		if (millisecondsTimeout is null)
+		{
 			target.EnterReadLock();
+		}
 		else if (!target.TryEnterReadLock(millisecondsTimeout.Value))
 		{
-			if (throwsOnTimeout)
-				throw new TimeoutException(
-					$"Could not acquire a read lock within the timeout specified. (millisecondsTimeout={millisecondsTimeout})");
-
-			return false;
+			return throwsOnTimeout
+				? throw new TimeoutException($"Could not acquire a read lock within the timeout specified. (millisecondsTimeout={millisecondsTimeout})")
+				: false;
 		}
 
 		return true;
@@ -81,14 +79,14 @@ public static class ReaderWriterLockSlimExensions
 		Contract.EndContractBlock();
 
 		if (millisecondsTimeout is null)
+		{
 			target.EnterUpgradeableReadLock();
+		}
 		else if (!target.TryEnterUpgradeableReadLock(millisecondsTimeout.Value))
 		{
-			if (throwsOnTimeout)
-				throw new TimeoutException(
-					$"Could not acquire an upgradeable read lock within the timeout specified. (millisecondsTimeout={millisecondsTimeout})");
-
-			return false;
+			return throwsOnTimeout
+				? throw new TimeoutException($"Could not acquire an upgradeable read lock within the timeout specified. (millisecondsTimeout={millisecondsTimeout})")
+				: false;
 		}
 
 		return true;
@@ -107,14 +105,14 @@ public static class ReaderWriterLockSlimExensions
 		Contract.EndContractBlock();
 
 		if (millisecondsTimeout is null)
+		{
 			target.EnterWriteLock();
+		}
 		else if (!target.TryEnterWriteLock(millisecondsTimeout.Value))
 		{
-			if (throwsOnTimeout)
-				throw new TimeoutException(
-					$"Could not acquire a write lock within the timeout specified. (millisecondsTimeout={millisecondsTimeout})");
-
-			return false;
+			return throwsOnTimeout
+				? throw new TimeoutException($"Could not acquire a write lock within the timeout specified. (millisecondsTimeout={millisecondsTimeout})")
+				: false;
 		}
 
 		return true;
@@ -216,10 +214,9 @@ public static class ReaderWriterLockSlimExensions
 		return lockHeld;
 	}
 
-
 	/// <summary>
 	/// ReaderWriterLockSlim extension for synchronizing upgradeable read access.
-	/// This method allows for entering a write lock within the query, but there can only be one upgraded thread at at time.
+	/// This method allows for entering a write lock within the query, but there can only be one upgraded thread at time.
 	/// </summary>
 	/// <param name="target">The ReaderWriterLockSlim to use for locking.</param>
 	/// <param name="closure">Action to execute once a lock is acquired.</param>
@@ -254,7 +251,7 @@ public static class ReaderWriterLockSlimExensions
 
 	/// <summary>
 	/// ReaderWriterLockSlim extension for synchronizing upgradeable read access.
-	/// This method allows for entering a write lock within the query, but there can only be one upgraded thread at at time.
+	/// This method allows for entering a write lock within the query, but there can only be one upgraded thread at time.
 	/// </summary>
 	/// <param name="target">The ReaderWriterLockSlim to use for locking.</param>
 	/// <param name="result">The value from the closure.</param>
@@ -287,7 +284,6 @@ public static class ReaderWriterLockSlimExensions
 
 		return lockHeld;
 	}
-
 
 	/// <summary>
 	/// ReaderWriterLockSlim extension for synchronizing write access.
@@ -365,7 +361,7 @@ public static class ReaderWriterLockSlimExensions
 	/// <param name="target">The ReaderWriterLockSlim to use for locking.</param>
 	/// <param name="condition">Takes a bool where false means no lock and true means a write lock.  Returns true if it should execute the query Action.</param>
 	/// <param name="closure">Action to execute once a lock is acquired.</param>
-	/// <param name="millisecondsTimeout">The number of milliseconds to to wait before timing out.  Null value will wait indefinitely.</param>
+	/// <param name="millisecondsTimeout">The number of milliseconds to wait before timing out.  Null value will wait indefinitely.</param>
 	/// <param name="throwsOnTimeout">If true, will throw an timeout exception if the timeout is reached.</param>
 	/// <returns>Returns false if a timeout is reached.</returns>
 	public static bool WriteConditional(this ReaderWriterLockSlim target,
@@ -404,7 +400,7 @@ public static class ReaderWriterLockSlimExensions
 	/// <param name="result">The value from the closure.</param>
 	/// <param name="condition">Takes a bool where false means no lock and true means a write lock.  Returns true if it should execute the query Action.</param>
 	/// <param name="closure">Action to execute once a lock is acquired.</param>
-	/// <param name="millisecondsTimeout">The number of milliseconds to to wait before timing out.  Null value will wait indefinitely.</param>
+	/// <param name="millisecondsTimeout">The number of milliseconds to wait before timing out.  Null value will wait indefinitely.</param>
 	/// <param name="throwsOnTimeout">If true, will throw an timeout exception if the timeout is reached.</param>
 	/// <returns>Returns false if a timeout is reached.</returns>
 	public static bool WriteConditional<T>(this ReaderWriterLockSlim target,
@@ -446,7 +442,7 @@ public static class ReaderWriterLockSlimExensions
 	/// <param name="target">The ReaderWriterLockSlim to use for locking.</param>
 	/// <param name="condition">Takes a bool where false means a read lock and true means a write lock.  Returns true if it should execute the query Action.</param>
 	/// <param name="closure">Action to execute once a lock is acquired.</param>
-	/// <param name="millisecondsTimeout">The number of milliseconds to to wait before timing out.  Null value will wait indefinitely.</param>
+	/// <param name="millisecondsTimeout">The number of milliseconds to wait before timing out.  Null value will wait indefinitely.</param>
 	/// <param name="throwsOnTimeout">If true, will throw an timeout exception if the timeout is reached.</param>
 	/// <returns>Returns false if a timeout is reached.</returns>
 	public static bool ReadWriteConditional(this ReaderWriterLockSlim target,
@@ -473,7 +469,6 @@ public static class ReaderWriterLockSlimExensions
 			},
 			millisecondsTimeout,
 			throwsOnTimeout);
-
 		}
 
 		return lockHeld;
@@ -487,7 +482,7 @@ public static class ReaderWriterLockSlimExensions
 	/// <param name="result">The value from the closure.</param>
 	/// <param name="condition">Takes a bool where false means a read lock and true means a write lock.  Returns true if it should execute the query Action.</param>
 	/// <param name="closure">Action to execute once a lock is acquired.</param>
-	/// <param name="millisecondsTimeout">The number of milliseconds to to wait before timing out.  Null value will wait indefinitely.</param>
+	/// <param name="millisecondsTimeout">The number of milliseconds to wait before timing out.  Null value will wait indefinitely.</param>
 	/// <param name="throwsOnTimeout">If true, will throw an timeout exception if the timeout is reached.</param>
 	/// <returns>Returns false if a timeout is reached.</returns>
 	public static bool ReadWriteConditional<T>(this ReaderWriterLockSlim target,
@@ -516,11 +511,9 @@ public static class ReaderWriterLockSlimExensions
 			},
 			millisecondsTimeout,
 			throwsOnTimeout);
-
 		}
 		if (written)
 			result = r;
-
 
 		return lockHeld;
 	}
@@ -532,7 +525,7 @@ public static class ReaderWriterLockSlimExensions
 	/// <param name="target">The ReaderWriterLockSlim to use for locking.</param>
 	/// <param name="condition">Takes a bool where false means a read lock and true means a write lock.  Returns true if it should execute the query Action.</param>
 	/// <param name="closure">Action to execute once a lock is acquired.</param>
-	/// <param name="millisecondsTimeout">The number of milliseconds to to wait before timing out.  Null value will wait indefinitely.</param>
+	/// <param name="millisecondsTimeout">The number of milliseconds to wait before timing out.  Null value will wait indefinitely.</param>
 	/// <param name="throwsOnTimeout">If true, will throw an timeout exception if the timeout is reached.</param>
 	/// <returns>Returns false if a timeout is reached.</returns>
 	public static bool ReadUpgradeableWriteConditional(this ReaderWriterLockSlim target,
@@ -566,7 +559,7 @@ public static class ReaderWriterLockSlimExensions
 	/// <param name="result">The value from the closure.</param>
 	/// <param name="condition">Takes a bool where false means a read lock and true means a write lock.  Returns true if it should execute the query Action.</param>
 	/// <param name="closure">Action to execute once a lock is acquired.</param>
-	/// <param name="millisecondsTimeout">The number of milliseconds to to wait before timing out.  Null value will wait indefinitely.</param>
+	/// <param name="millisecondsTimeout">The number of milliseconds to wait before timing out.  Null value will wait indefinitely.</param>
 	/// <param name="throwsOnTimeout">If true, will throw an timeout exception if the timeout is reached.</param>
 	/// <returns>Returns false if a timeout is reached.</returns>
 	public static bool ReadUpgradeableWriteConditional<T>(this ReaderWriterLockSlim target,
@@ -588,8 +581,8 @@ public static class ReaderWriterLockSlimExensions
 		var readLocked = target.ReadUpgradeable(() =>
 		{
 			if (!condition()) return;
-				// out r ensures that it IS written to.
-				writeLocked = target.Write(out r, closure, millisecondsTimeout, throwsOnTimeout);
+			// out r ensures that it IS written to.
+			writeLocked = target.Write(out r, closure, millisecondsTimeout, throwsOnTimeout);
 			written = true;
 		});
 
@@ -607,7 +600,7 @@ public static class ReaderWriterLockSlimExensions
 	/// <param name="target">The ReaderWriterLockSlim to use for locking.</param>
 	/// <param name="condition">Takes a bool where false means a read lock and true means a write lock.  Returns true if it should execute the query Action.</param>
 	/// <param name="closure">Action to execute once a lock is acquired.</param>
-	/// <param name="millisecondsTimeout">The number of milliseconds to to wait before timing out.  Null value will wait indefinitely.</param>
+	/// <param name="millisecondsTimeout">The number of milliseconds to wait before timing out.  Null value will wait indefinitely.</param>
 	/// <param name="throwsOnTimeout">If true, will throw an timeout exception if the timeout is reached.</param>
 	/// <returns>Returns false if a timeout is reached.</returns>
 	public static bool ReadWriteConditionalOptimized(this ReaderWriterLockSlim target,
@@ -637,7 +630,7 @@ public static class ReaderWriterLockSlimExensions
 	/// <param name="result">The value from the closure.</param>
 	/// <param name="condition">Takes a bool where false means a read lock and true means a write lock.  Returns true if it should execute the query Action.</param>
 	/// <param name="closure">Action to execute once a lock is acquired.</param>
-	/// <param name="millisecondsTimeout">The number of milliseconds to to wait before timing out.  Null value will wait indefinitely.</param>
+	/// <param name="millisecondsTimeout">The number of milliseconds to wait before timing out.  Null value will wait indefinitely.</param>
 	/// <param name="throwsOnTimeout">If true, will throw an timeout exception if the timeout is reached.</param>
 	/// <returns>Returns false if a timeout is reached.</returns>
 	public static bool ReadWriteConditionalOptimized<T>(this ReaderWriterLockSlim target,
@@ -680,7 +673,7 @@ public static class ReaderWriterLockSlimExensions
 
 		T? result = null;
 		target.ReadWriteConditionalOptimized(
-			ref result, lockType => (result = getValue()) is null, createValue);
+			ref result, _ => (result = getValue()) is null, createValue);
 
 		return result!;
 	}
@@ -692,7 +685,7 @@ public static class ReaderWriterLockSlimExensions
 	/// <param name="target">The ReaderWriterLockSlim to use for locking.</param>
 	/// <param name="getValue">The function to get the value.</param>
 	/// <param name="createValue">The create value factory.</param>
-	/// <param name="millisecondsTimeout">The number of milliseconds to to wait before timing out.  Null value will wait indefinitely.</param>
+	/// <param name="millisecondsTimeout">The number of milliseconds to wait before timing out.  Null value will wait indefinitely.</param>
 	/// <param name="throwsOnTimeout">If true, will throw an timeout exception if the timeout is reached.</param>
 	/// <returns>The value acquired.</returns>
 	public static T? GetOrCreateValue<T>(this ReaderWriterLockSlim target,
@@ -711,7 +704,7 @@ public static class ReaderWriterLockSlimExensions
 
 		T? result = null;
 		target.ReadWriteConditionalOptimized(
-			ref result, lockType => (result = getValue()) is null, createValue,
+			ref result, _ => (result = getValue()) is null, createValue,
 			millisecondsTimeout,
 			throwsOnTimeout);
 
@@ -724,7 +717,7 @@ public static class ReaderWriterLockSlimExensions
 	/// <param name="target">The ReaderWriterLockSlim to use for locking.</param>
 	/// <param name="result">The result if a lock is acquired..</param>
 	/// <param name="valueFactory">The value factory.</param>
-	/// <param name="millisecondsTimeout">The number of milliseconds to to wait before timing out.  Null value will wait indefinitely.</param>
+	/// <param name="millisecondsTimeout">The number of milliseconds to wait before timing out.  Null value will wait indefinitely.</param>
 	/// <returns>Returns false if a timeout is reached.</returns>
 	public static bool TryReadValue<T>(this ReaderWriterLockSlim target,
 #if NETSTANDARD2_1
@@ -807,6 +800,4 @@ public static class ReaderWriterLockSlimExensions
 		target.Write(() => result = valueFactory(), millisecondsTimeout, true);
 		return result!;
 	}
-
-
 }
