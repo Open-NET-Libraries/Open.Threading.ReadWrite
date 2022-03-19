@@ -19,7 +19,7 @@ This extension library removes the tediousness of properly acquiring and releasi
 ### Read
 
 ```cs
-rwLockSlim.Read(()=>
+rwLockSlim.Read(() =>
 {
     /* do work inside a read lock */
 });
@@ -33,7 +33,7 @@ using(rwLockSlim.ReadLock())
 ```
 
 ```cs
-int result = rwLockSlim.Read(()=>
+int result = rwLockSlim.Read(() =>
 {
     int i;
     /* produce a result inside read lock */
@@ -46,7 +46,7 @@ int result = rwLockSlim.Read(()=>
 ### Write
 
 ```cs
-rwLockSlim.Write(()=>
+rwLockSlim.Write(() =>
 {
     /* do work inside a read lock */
 });
@@ -60,7 +60,7 @@ using(rwLockSlim.WriteLock())
 ```
 
 ```cs
-int result = rwLockSlim.Write(()=>
+int result = rwLockSlim.Write(() =>
 {
     int i;
     /* produce a result inside write lock */
@@ -96,7 +96,7 @@ These throw a `TimeoutException` if a lock cannot be acquired within the time sp
 ### Read
 
 ```cs
-rwLockSlim.Read(1000 /* ms */, ()=>
+rwLockSlim.Read(1000 /* ms */, () =>
 {
     /* do work inside a read lock */
 });
@@ -116,7 +116,7 @@ using(rwLockSlim.ReadLock(1000)) // ms
 ### Write
 
 ```cs
-rwLockSlim.Write(1000 /* ms */, ()=>
+rwLockSlim.Write(1000 /* ms */, () =>
 {
     /* do work inside a write lock */
 });
@@ -141,8 +141,8 @@ This example demonstrates how to properly query a value before writing with a 1 
 
 ```cs
 var actionWasInvoked = rwLockSlim.WriteConditional(1000 /* ms */,
-()=> /* condition that is queried inside an upgradable read lock */,
-()=> /* do work inside a write lock */);
+() => /* condition that is queried inside an upgradable read lock */,
+() => /* do work inside a write lock */);
 ```
 
 ### ReadWriteConditional
@@ -153,7 +153,7 @@ This more advanced example optimizes the process of reading and then writing by 
 int result = 0;
 bool actionWasInvoked = rwLockSlim.ReadWriteConditional(ref result,
 isUpgraded => /* condition that is first queried inside a read lock */,
-()=>
+() =>
 {
     int i;
     /* do work inside a write lock */
