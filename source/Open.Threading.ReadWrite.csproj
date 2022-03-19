@@ -4,6 +4,7 @@
 		<RootNamespace>Open.Threading</RootNamespace>
 		<TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
 		<LangVersion>latest</LangVersion>
+		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -18,7 +19,7 @@
 		<PackageProjectUrl>https://github.com/Open-NET-Libraries/Open.Threading.ReadWrite/</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Open-NET-Libraries/Open.Threading.ReadWrite/</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
-		<Version>1.4.8</Version>
+		<Version>2.0.0-preview1</Version>
 		<PackageReleaseNotes></PackageReleaseNotes>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
@@ -26,6 +27,9 @@
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 		<PackageIcon>logo.png</PackageIcon>
 		<AnalysisLevel>latest</AnalysisLevel>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+		<DocumentationFile>Documentation.xml</DocumentationFile>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -33,16 +37,14 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Remove=".git" />
-		<None Remove=".gitignore" />
-		<None Include="logo.png">
+		<None Include="..\logo.png">
 			<Pack>True</Pack>
-			<PackagePath></PackagePath>
+			<PackagePath>\</PackagePath>
 		</None>
-	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Include="Open.Disposable.ObjectPools" Version="2.8.2" />
+		<None Include="..\README.md">
+		  <Pack>True</Pack>
+		  <PackagePath>\</PackagePath>
+		</None>
 	</ItemGroup>
 
 </Project>
