@@ -63,6 +63,8 @@ public class WriteTests : ReaderWriterLockSlimTestBase
 
 	protected override void ActionTimeoutCore()
 	{
+		Sync.TryGetLock(LockType.Write, 1).Should().BeNull();
+
 		bool ran = false;
 		void Run() => ran = false;
 		Assert.Throws<TimeoutException>(() => Sync.Write(1, Run));

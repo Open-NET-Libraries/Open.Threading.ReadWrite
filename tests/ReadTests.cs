@@ -13,7 +13,7 @@ public class ReadTests : ReaderWriterLockSlimTestBase
 
 	[Fact]
 	public void GetInvalidLockTest()
-		=> Assert.Throws<ArgumentOutOfRangeException>(() => Sync.GetLock(LockType.None));
+		=> Assert.Throws<ArgumentOutOfRangeException>(() => Sync.TryGetLock(LockType.None, -1));
 
 	[Fact]
 	public override void EnterTest()
@@ -67,6 +67,8 @@ public class ReadTests : ReaderWriterLockSlimTestBase
 
 	protected override void ActionTimeoutCore()
 	{
+		Sync.TryGetLock(LockType.Read, 1).Should().BeNull();
+
 		bool ran = false;
 		void Run() => ran = false;
 		Assert.Throws<TimeoutException>(() => Sync.Read(1, Run));

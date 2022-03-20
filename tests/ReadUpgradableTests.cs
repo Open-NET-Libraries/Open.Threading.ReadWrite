@@ -71,6 +71,8 @@ public class ReadUpgradableTests : ReaderWriterLockSlimTestBase
 
 	protected override void ActionTimeoutCore()
 	{
+		Sync.TryGetLock(LockType.UpgradableRead, 1).Should().BeNull();
+
 		bool ran = false;
 		void Run() => ran = false;
 		Assert.Throws<TimeoutException>(() => Sync.ReadUpgradeable(1, Run));

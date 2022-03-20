@@ -116,6 +116,19 @@ public static partial class ReaderWriterLockSlimExensions
 			_ => throw new ArgumentOutOfRangeException(nameof(lockType), lockType, "Must be either Read, ReadUpgradable, or Write.")
 		};
 
+	/// <remarks>Only returns a lock if one is actually held.</remarks>
+	/// <inheritdoc cref="GetLock(ReaderWriterLockSlim, LockType, LockTimeout, bool)"/>
+	public static ILock? TryGetLock(
+		this ReaderWriterLockSlim target,
+		LockType lockType,
+		LockTimeout timeout)
+	{
+		var iLock = GetLock(target, lockType, timeout, false);
+		if (iLock.LockHeld) return iLock;
+		iLock.Dispose();
+		return null;
+	}
+
 	/// <exception cref="TimeoutException">If no lock could be acquired within the timeout.</exception>
 	/// <inheritdoc cref="ReadLock.ReadLock(ReaderWriterLockSlim, LockTimeout, bool)"/>
 	[ExcludeFromCodeCoverage]

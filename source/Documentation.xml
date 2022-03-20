@@ -247,6 +247,10 @@
             <param name="throwIfTimeout"><inheritdoc cref="M:Open.Threading.Lock.#ctor(System.Object,Open.Threading.LockTimeout,System.Boolean)" path="/param[@name='throwIfTimeout']"/></param>
             <returns>An <see cref="T:Open.Threading.ILock"/> of the type requestd.</returns>
         </member>
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryGetLock(System.Threading.ReaderWriterLockSlim,Open.Threading.LockType,Open.Threading.LockTimeout)">
+            <remarks>Only returns a lock if one is actually held.</remarks>
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.GetLock(System.Threading.ReaderWriterLockSlim,Open.Threading.LockType,Open.Threading.LockTimeout,System.Boolean)"/>
+        </member>
         <member name="M:Open.Threading.ReaderWriterLockSlimExensions.ReadLock(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout)">
             <exception cref="T:System.TimeoutException">If no lock could be acquired within the timeout.</exception>
             <inheritdoc cref="M:Open.Threading.ReadLock.#ctor(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Boolean)"/>

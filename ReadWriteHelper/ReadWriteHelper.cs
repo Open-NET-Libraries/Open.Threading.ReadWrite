@@ -11,66 +11,6 @@ namespace Open.Threading;
 /// </summary>
 public class ReadWriteHelper<TKey> : DeferredCleanupBase
 {
-	class ReaderWriterLockTracker : DisposableBase
-	{
-		readonly HashSet<object> _registry = new();
-
-		public ReaderWriterLockSlim? Lock;
-
-		private ReaderWriterLockTracker(ReaderWriterLockSlim rwlock) => Lock = rwlock;
-
-		public ReaderWriterLockTracker(LockRecursionPolicy policy)
-			: this(new ReaderWriterLockSlim(policy))
-		{
-		}
-
-		public bool Reserve(object context)
-		{
-			if (WasDisposed)
-				return false;
-
-			lock (_registry)
-			{
-				return _registry.Add(context);
-			}
-		}
-
-		public void Clear(object context)
-		{
-			lock (_registry)
-			{
-				_registry.Remove(context);
-			}
-		}
-
-		public bool CanDispose
-		{
-			get
-			{
-				lock (_registry)
-				{
-					return _registry.Count == 0;
-				}
-			}
-		}
-
-		protected override void OnDispose()
-		{
-			lock (_registry)
-			{
-				//Contract.Assume(CanDispose);
-				// ReSharper disable once RedundantAssignment
-				var count = _registry.Count;
-				Debug.WriteLineIf(count != 0, "Disposing a ReaderWriterLockTracker with " + count + " contexts still registered.");
-				_registry.Clear();
-			}
-
-			var l = Lock;
-			Lock = null;
-			l?.Dispose();
-		}
-	}
-
 	readonly IObjectPool<object> ContextPool;
 	readonly ConcurrentQueueObjectPool<ReaderWriterLockTracker> LockPool;
 
@@ -80,11 +20,10 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 	readonly ReaderWriterLockSlim CleanupManager
 		= new(LockRecursionPolicy.SupportsRecursion);
 
-	public ReadWriteHelper() : this(false)
-	{
-	}
-
-	public ReadWriteHelper(bool supportRecursion)
+	/// <summary>
+	/// Constructs a <see cref="ReadWriteHelper{TKey}"/>.
+	/// </summary>
+	public ReadWriteHelper(bool supportRecursion = false)
 	{
 		//Debug.WriteLine("Constructing: "+this.ToString());
 
@@ -106,17 +45,24 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 	ReaderWriterLockTracker Factory()
 	{
 		var created = new ReaderWriterLockTracker(RecursionPolicy);
+#if DEBUG
 		if (Debugger.IsAttached)
 			created.BeforeDispose += Debug_TrackerDisposedWhileInUse;
+#endif
 		return created;
 	}
 
-	public LockRecursionPolicy RecursionPolicy
-	{
-		get;
-	}
+	/// <summary>
+	/// The <see cref="LockRecursionPolicy"/> being used.
+	/// </summary>
+	public LockRecursionPolicy RecursionPolicy { get; }
 
-	private ReaderWriterLockTracker? GetLock(TKey key, LockType type, object context, LockTimeout timeout = default, bool throwOnTimeout = false)
+	private ReaderWriterLockTracker? TryGetLock(
+		TKey key,
+		LockType type,
+		object context,
+		int timeout = Timeout.Infinite,
+		bool throwIfTimeout = false)
 	{
 		if (key is null)
 			throw new ArgumentNullException(nameof(key));
@@ -175,11 +121,12 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 					return null;
 
 				var lockHeld = false;
-				if (!result.Reserve(context)) return null;
+				var reserved = result.Reserve(context);
+				if (reserved is null) return null; // could not acquire a lock.
 				try
 				{
 					// result.Lock will only be null if the tracker has been disposed.
-					lockHeld = ReadWriteHelper<TKey>.AcquireLock(result.Lock, type, timeout, throwOnTimeout);
+					lockHeld = ReadWriteHelper<TKey>.TryAcquireLock(reserved, type, timeout, throwIfTimeout);
 				}
 				catch (LockRecursionException lrex)
 				{
@@ -196,15 +143,16 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 				return lockHeld ? result : null;
 			});
 
-		// In the rare case that a dispose could be initiated during this ReadValue:
+		// In the rare case that a dispose could be initiated during this Read:
 		// We need to not propagate locking...
 		if (r is null || !WasDisposed) return r;
-		ReleaseLock(r.Lock, type);
-		r.Clear(context);
 
+		ReleaseLock(r.Lock!, type);
+		r.Clear(context);
 		return null;
 	}
 
+#if DEBUG
 	void Debug_TrackerDisposedWhileInUse(object sender, EventArgs e)
 	{
 		var tracker = (ReaderWriterLockTracker)sender;
@@ -213,61 +161,10 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 		//if (LockPool.Contains(tracker))
 		//	Debug.Fail("Attempting to dispose a tracker that is still availalbe in the pool.");
 	}
+#endif
 
-	private static bool TryAcquireLock(ReaderWriterLockSlim target, LockType type, LockTimeout timeout)
+	private void AfterRelease()
 	{
-		Debug.Assert(target is not null);
-		return type switch
-		{
-			LockType.Read => target!.TryEnterReadLock(timeout),
-			LockType.UpgradableRead => target!.TryEnterUpgradeableReadLock(timeout),
-			LockType.Write => target!.TryEnterWriteLock(timeout),
-			_ => false,
-		};
-	}
-
-	private static void AcquireLock(ReaderWriterLockSlim target, LockType type, LockTimeout timeout)
-	{
-		Debug.Assert(target is not null);
-		switch (type)
-		{
-			case LockType.Read:
-				target!.EnterReadLock(timeout);
-				break;
-			case LockType.UpgradableRead:
-				target!.EnterUpgradeableReadLock(timeout);
-				break;
-			case LockType.Write:
-				target!.EnterWriteLock(timeout);
-				break;
-		}
-	}
-
-	private static bool AcquireLock(ReaderWriterLockSlim target, LockType type, LockTimeout timeout, bool throwOnTimeout)
-	{
-		if (!throwOnTimeout)
-			return TryAcquireLock(target, type, timeout);
-
-		AcquireLock(target, type, timeout);
-		return true;
-	}
-
-	private void ReleaseLock(ReaderWriterLockSlim? target, LockType type)
-	{
-		if (target is null) return;
-		switch (type)
-		{
-			case LockType.Read:
-				target.ExitReadLock();
-				break;
-			case LockType.UpgradableRead:
-				target.ExitUpgradeableReadLock();
-				break;
-			case LockType.Write:
-				target.ExitWriteLock();
-				break;
-		}
-
 		if (WasDisposed) return;
 		UpdateCleanupDelay();
 
@@ -277,37 +174,44 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 	}
 
 	// Funnel all delegates through here to ensure proper procedure for getting and releasing locks.
-	private bool Execute(TKey key, LockType type, Action<ReaderWriterLockSlim> closure, LockTimeout timeout = default, bool throwOnTimeout = false)
+	private bool Execute(
+		TKey key,
+		LockType type,
+		Action<ReaderWriterLockSlim> closure,
+		int timeout,
+		bool throwIfTimeout)
 	{
-		if (key is null)
-			throw new ArgumentNullException(nameof(key));
-		if (closure is null)
-			throw new ArgumentNullException(nameof(closure));
-		Contract.EndContractBlock();
+		Debug.Assert(key is not null);
+		Debug.Assert(closure is not null);
 
 		using var context = ContextPool.Rent();
 
-		var rwlock = GetLock(key, type, context, timeout, throwOnTimeout);
-		if (rwlock?.Lock is null)
+		var tracker = TryGetLock(key, type, context, timeout, throwIfTimeout);
+		if (tracker is null)
+			return false;
+		var rwlock = tracker.Lock;
+		if (rwlock is null)
 			return false;
 
 		try
 		{
-			closure(rwlock.Lock);
+			closure!(rwlock);
 		}
 		finally
 		{
 			try
 			{
-				ReleaseLock(rwlock.Lock, type);
-				rwlock.Clear(context);
+				ReleaseLock(rwlock, type);
+				tracker.Clear(context);
 			}
 			catch (Exception ex)
 			{
 				Debug.WriteLine(ex.ToString());
 				// The above cannot fail or dire concequences...
 				Debugger.Break();
+#pragma warning disable CA2219 // Do not raise exceptions in finally clauses
 				throw;
+#pragma warning restore CA2219 // Do not raise exceptions in finally clauses
 			}
 		}
 		return true;
@@ -318,15 +222,15 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 		LockType type,
 		out T result,
 		Func<ReaderWriterLockSlim, T> closure,
-		LockTimeout timeout,
-		bool throwOnTimeout)
+		int timeout,
+		bool throwIfTimeout)
 	{
 		T r = default!;
 
 		var acquired = Execute(key, type,
 			(rwlock) => r = closure(rwlock),
 			timeout,
-			throwOnTimeout);
+			throwIfTimeout);
 
 		result = r!;
 
@@ -334,89 +238,89 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 	}
 
 	// Funnel all delegates through here to ensure proper procedure for getting and releasing locks.
-	private bool Execute(TKey key, LockType type, Action closure, LockTimeout timeout = default, bool throwOnTimeout = false)
+	private bool Execute(TKey key, LockType type, Action closure, int timeout = Timeout.Infinite, bool throwIfTimeout = false)
 	{
 		if (closure is null)
 			throw new ArgumentNullException(nameof(closure));
 		Contract.EndContractBlock();
 
-		return Execute(key, type, (_) => closure(), timeout, throwOnTimeout);
+		return Execute(key, type, (_) => closure(), timeout, throwIfTimeout);
 	}
 
 	// Funnel all delegates through here to ensure proper procedure for getting and releasing locks.
-	private bool Execute<T>(TKey key, LockType type, out T result, Func<T> closure, LockTimeout timeout = default, bool throwOnTimeout = false)
+	private bool Execute<T>(TKey key, LockType type, out T result, Func<T> closure, int timeout = Timeout.Infinite, bool throwIfTimeout = false)
 	{
 		if (closure is null)
 			throw new ArgumentNullException(nameof(closure));
 		Contract.EndContractBlock();
 
-		return Execute(key, type, out result, (_) => closure(), timeout, throwOnTimeout);
+		return Execute(key, type, out result, (_) => closure(), timeout, throwIfTimeout);
 	}
 
-	#region Read/Write Public Interface
+#region Read/Write Public Interface
 	/// <summary>
-	/// Executes the query within a read lock based upon the cacheKey provided..
+	/// Executes the query within a read lock based upon the <paramref name="key"/> provided..
 	/// </summary>
 	/// <returns>Returns false if a timeout is reached.</returns>
 	public bool Read(
 		TKey key, Action closure,
-		LockTimeout timeout = default, bool throwOnTimeout = false)
-		=> Execute(key, LockType.Read, closure, timeout, throwOnTimeout);
+		LockTimeout timeout = default, bool throwIfTimeout = false)
+		=> Execute(key, LockType.Read, closure, timeout, throwIfTimeout);
 
 	/// <summary>
-	/// Executes the query within a read lock based upon the cacheKey provided..
+	/// Executes the query within a read lock based upon the <paramref name="key"/> provided..
 	/// </summary>
 	/// <returns>Returns false if a timeout is reached.</returns>
 	public bool Read<T>(
 		TKey key, out T result, Func<T> valueFactory,
-		LockTimeout timeout = default, bool throwOnTimeout = false)
-		=> Execute(key, LockType.Read, out result, valueFactory, timeout, throwOnTimeout);
+		LockTimeout timeout = default, bool throwIfTimeout = false)
+		=> Execute(key, LockType.Read, out result, valueFactory, timeout, throwIfTimeout);
 
 	/// <summary>
-	/// Executes the query within an upgradeable read lock based upon the cacheKey provided..
+	/// Executes the query within an upgradeable read lock based upon the <paramref name="key"/> provided..
 	/// </summary>
 	/// <returns>Returns false if a timeout is reached.</returns>
 	private bool ReadUpgradeable(
 		TKey key, Action<ReaderWriterLockSlim> closure,
-		LockTimeout timeout = default, bool throwOnTimeout = false)
-		=> Execute(key, LockType.UpgradableRead, closure, timeout, throwOnTimeout);
+		LockTimeout timeout = default, bool throwIfTimeout = false)
+		=> Execute(key, LockType.UpgradableRead, closure, timeout, throwIfTimeout);
 
 	/// <summary>
-	/// Executes the query within an upgradeable read lock based upon the cacheKey provided..
+	/// Executes the query within an upgradeable read lock based upon the <paramref name="key"/> provided..
 	/// </summary>
 	/// <returns>Returns false if a timeout is reached.</returns>
 	public bool ReadUpgradeable<T>(
 		TKey key, out T result, Func<T> closure,
-		LockTimeout timeout = default, bool throwOnTimeout = false)
-		=> Execute(key, LockType.UpgradableRead, out result, closure, timeout, throwOnTimeout);
+		LockTimeout timeout = default, bool throwIfTimeout = false)
+		=> Execute(key, LockType.UpgradableRead, out result, closure, timeout, throwIfTimeout);
 
 	/// <summary>
-	/// Executes the query within an upgradeable read lock based upon the cacheKey provided..
+	/// Executes the query within an upgradeable read lock based upon the <paramref name="key"/> provided..
 	/// </summary>
 	/// <returns>Returns false if a timeout is reached.</returns>
 	public bool ReadUpgradeable(
 		TKey key, Action closure,
-		LockTimeout timeout = default, bool throwOnTimeout = false)
-		=> Execute(key, LockType.UpgradableRead, closure, timeout, throwOnTimeout);
+		LockTimeout timeout = default, bool throwIfTimeout = false)
+		=> Execute(key, LockType.UpgradableRead, closure, timeout, throwIfTimeout);
 
 	/// <summary>
-	/// Executes the query within a write lock based upon the cacheKey provided..
+	/// Executes the query within a write lock based upon the <paramref name="key"/> provided..
 	/// </summary>
 	/// <returns>Returns false if a timeout is reached.</returns>
-	public bool Write(TKey key, Action closure, LockTimeout timeout = default, bool throwOnTimeout = false)
-		=> Execute(key, LockType.Write, closure, timeout, throwOnTimeout);
+	public bool Write(TKey key, Action closure, LockTimeout timeout = default, bool throwIfTimeout = false)
+		=> Execute(key, LockType.Write, closure, timeout, throwIfTimeout);
 
 	/// <summary>
-	/// Executes the query within a write lock based upon the cacheKey provided..
+	/// Executes the query within a write lock based upon the <paramref name="key"/> provided..
 	/// </summary>
 	/// <returns>Returns false if a timeout is reached.</returns>
 	public bool Write<T>(
 		TKey key, out T result, Func<T> closure,
-		LockTimeout timeout = default, bool throwOnTimeout = false)
-		=> Execute(key, LockType.Write, out result, closure, timeout, throwOnTimeout);
+		LockTimeout timeout = default, bool throwIfTimeout = false)
+		=> Execute(key, LockType.Write, out result, closure, timeout, throwIfTimeout);
 
 	/// <summary>
-	/// Executes the query within a read lock based upon the cacheKey provided..
+	/// Executes the query within a read lock based upon the <paramref name="key"/> provided..
 	/// Throws a TimeoutException if a lock could not be acquired within the specified timeout.
 	/// </summary>
 	/// <returns>Returns the addValue from the valueFactory.</returns>
@@ -427,7 +331,7 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 	}
 
 	/// <summary>
-	/// Executes the query within a write lock based upon the cacheKey provided..
+	/// Executes the query within a write lock based upon the <paramref name="key"/> provided..
 	/// Throws a TimeoutException if a lock could not be acquired within the specified timeout.
 	/// </summary>
 	/// <returns>Returns the addValue from the valueFactory.</returns>
@@ -445,9 +349,9 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 	/// <param name="condition">Takes a bool where false means no lock and true means a write lock.  Returns true if it should execute the query Action. ** NOT THREAD SAFE</param>
 	/// <param name="closure">Action to execute once a lock is acquired.</param>
 	/// <param name="timeout">Indicates if and for how long a timeout is used to acquire a lock.</param>
-	/// <param name="throwOnTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
+	/// <param name="throwIfTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
 	/// <returns>Returns false if a timeout is reached.</returns>
-	protected bool WriteConditional(TKey key, Func<bool, bool> condition, Action closure, LockTimeout timeout = default, bool throwOnTimeout = false)
+	protected bool WriteConditional(TKey key, Func<bool, bool> condition, Action closure, LockTimeout timeout = default, bool throwIfTimeout = false)
 	{
 		if (condition is null)
 			throw new ArgumentNullException(nameof(condition));
@@ -462,7 +366,7 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 					closure();
 			},
 			timeout,
-			throwOnTimeout);
+			throwIfTimeout);
 		}
 
 		return lockHeld;
@@ -476,18 +380,18 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 	/// <param name="condition">Takes a bool where false means a read lock and true means a write lock.  Returns true if it should execute the query Action.</param>
 	/// <param name="closure">Action to execute once a lock is acquired.</param>
 	/// <param name="timeout">Indicates if and for how long a timeout is used to acquire a lock.</param>
-	/// <param name="throwOnTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
+	/// <param name="throwIfTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
 	/// <returns>Returns false if a timeout is reached.</returns>
 	public bool ReadWriteConditional(
 		TKey key, Func<LockType, bool> condition, Action closure,
-		LockTimeout timeout = default, bool throwOnTimeout = false)
+		LockTimeout timeout = default, bool throwIfTimeout = false)
 	{
 		if (condition is null)
 			throw new ArgumentNullException(nameof(condition));
 		Contract.EndContractBlock();
 
 		var c = false;
-		var lockHeld = Read(key, () => c = condition(LockType.Read), timeout, throwOnTimeout);
+		var lockHeld = Read(key, () => c = condition(LockType.Read), timeout, throwIfTimeout);
 		if (lockHeld && c)
 		{
 			lockHeld = Write(key, () =>
@@ -495,7 +399,7 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 				if (condition(LockType.Write))
 					closure();
 			},
-			timeout, throwOnTimeout);
+			timeout, throwIfTimeout);
 		}
 
 		return lockHeld;
@@ -510,12 +414,12 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 	/// <param name="condition">Takes a bool where false means a read lock and true means a write lock.  Returns true if it should execute the query Action.</param>
 	/// <param name="closure">Action to execute once a lock is acquired.</param>
 	/// <param name="timeout">Indicates if and for how long a timeout is used to acquire a lock.</param>
-	/// <param name="throwOnTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
+	/// <param name="throwIfTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
 	/// <returns>Returns false if a timeout is reached.</returns>
 	public bool ReadWriteConditional<T>(
 		ref T result,
 		TKey key, Func<LockType, bool> condition, Func<T> closure,
-		LockTimeout timeout = default, bool throwOnTimeout = false)
+		LockTimeout timeout = default, bool throwIfTimeout = false)
 	{
 		if (condition is null)
 			throw new ArgumentNullException(nameof(condition));
@@ -523,7 +427,7 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 
 		var r = result;
 		bool c = false, written = false;
-		var lockHeld = Read(key, () => c = condition(LockType.Read), timeout, throwOnTimeout);
+		var lockHeld = Read(key, () => c = condition(LockType.Read), timeout, throwIfTimeout);
 		if (lockHeld && c)
 		{
 			lockHeld = Write(key, out written, () =>
@@ -532,7 +436,7 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 				if (w) r = closure();
 				return w;
 			},
-			timeout, throwOnTimeout);
+			timeout, throwIfTimeout);
 		}
 
 		if (written)
@@ -549,12 +453,12 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 	/// <param name="condition">Takes a bool where false means a read lock and true means a write lock.  Returns true if it should execute the query Action.</param>
 	/// <param name="closure">Action to execute once a lock is acquired.</param>
 	/// <param name="timeout">Indicates if and for how long a timeout is used to acquire a lock.</param>
-	/// <param name="throwOnTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
+	/// <param name="throwIfTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
 	/// <returns>Returns false if a timeout is reached.</returns>
 	public bool ReadUpgradeableWriteConditional(
 		TKey key, Func<bool> condition, Action<bool> closure,
 		LockTimeout timeout = default,
-		bool throwOnTimeout = false)
+		bool throwIfTimeout = false)
 	{
 		if (condition is null)
 			throw new ArgumentNullException(nameof(condition));
@@ -569,8 +473,8 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 				return;
 
 			// Synchronize lock acquisistion.
-			writeLocked = rwlock.Write(closure, timeout, throwOnTimeout);
-		}, timeout, throwOnTimeout);
+			writeLocked = rwlock.Write(closure, timeout, throwIfTimeout);
+		}, timeout, throwIfTimeout);
 
 		return readLocked && writeLocked;
 	}
@@ -584,12 +488,12 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 	/// <param name="condition">Takes a bool where false means a read lock and true means a write lock.  Returns true if it should execute the query Action.</param>
 	/// <param name="closure">Action to execute once a lock is acquired.</param>
 	/// <param name="timeout">Indicates if and for how long a timeout is used to acquire a lock.</param>
-	/// <param name="throwOnTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
+	/// <param name="throwIfTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
 	/// <returns>Returns false if a timeout is reached.</returns>
 	public bool ReadUpgradeableWriteConditional<T>(
 		ref T result,
 		TKey key, Func<bool> condition, Func<bool, T> closure,
-		LockTimeout timeout = default, bool throwOnTimeout = false)
+		LockTimeout timeout = default, bool throwIfTimeout = false)
 	{
 		if (condition is null)
 			throw new ArgumentNullException(nameof(condition));
@@ -603,9 +507,9 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 		{
 			if (!condition()) return;
 			// Synchronize lock acquisistion.
-			writeLocked = rwlock.Write(out r, closure, timeout, throwOnTimeout);
+			writeLocked = rwlock.Write(timeout, out r, closure);
 			written = true;
-		}, timeout, throwOnTimeout);
+		}, timeout, throwIfTimeout);
 		if (written) result = r;
 
 		return readLocked && writeLocked;
@@ -619,19 +523,19 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 	/// <param name="condition">Takes a bool where false means a read lock and true means a write lock.  Returns true if it should execute the query Action.</param>
 	/// <param name="closure">Action to execute once a lock is acquired.</param>
 	/// <param name="timeout">Indicates if and for how long a timeout is used to acquire a lock.</param>
-	/// <param name="throwOnTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
+	/// <param name="throwIfTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
 	/// <returns>Returns false if a timeout is reached.</returns>
 	public bool ReadWriteConditionalOptimized(
 		TKey key, Func<LockType, bool> condition, Action<bool> closure,
-		LockTimeout timeout = default, bool throwOnTimeout = false)
+		LockTimeout timeout = default, bool throwIfTimeout = false)
 	{
 		if (condition is null)
 			throw new ArgumentNullException(nameof(condition));
 		Contract.EndContractBlock();
 
 		var c = false;
-		var lockHeld = Read(key, () => c = condition(LockType.Read), timeout, throwOnTimeout);
-		return lockHeld && (!c || ReadUpgradeableWriteConditional(key, () => condition(LockType.UpgradableRead), closure, timeout, throwOnTimeout));
+		var lockHeld = Read(key, () => c = condition(LockType.Read), timeout, throwIfTimeout);
+		return lockHeld && (!c || ReadUpgradeableWriteConditional(key, () => condition(LockType.UpgradableRead), closure, timeout, throwIfTimeout));
 	}
 
 	/// <summary>
@@ -643,23 +547,23 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 	/// <param name="condition">Takes a bool where false means a read lock and true means a write lock.  Returns true if it should execute the query Action.</param>
 	/// <param name="closure">Action to execute once a lock is acquired.</param>
 	/// <param name="timeout">Indicates if and for how long a timeout is used to acquire a lock.</param>
-	/// <param name="throwOnTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
+	/// <param name="throwIfTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
 	/// <returns>Returns false if a timeout is reached.</returns>
 	public bool ReadWriteConditionalOptimized<T>(
 		TKey key, ref T result, Func<LockType, bool> condition, Func<bool, T> closure,
-		LockTimeout timeout = default, bool throwOnTimeout = false)
+		LockTimeout timeout = default, bool throwIfTimeout = false)
 	{
 		if (condition is null)
 			throw new ArgumentNullException(nameof(condition));
 		Contract.EndContractBlock();
 
 		var c = false;
-		var lockHeld = Read(key, () => c = condition(LockType.Read), timeout, throwOnTimeout);
-		return lockHeld && (!c || ReadUpgradeableWriteConditional(ref result, key, () => condition(LockType.UpgradableRead), closure, timeout, throwOnTimeout));
+		var lockHeld = Read(key, () => c = condition(LockType.Read), timeout, throwIfTimeout);
+		return lockHeld && (!c || ReadUpgradeableWriteConditional(ref result, key, () => condition(LockType.UpgradableRead), closure, timeout, throwIfTimeout));
 	}
-	#endregion
+#endregion
 
-	#region Cleanpup & Dispose
+#region Cleanpup & Dispose
 	private void CleanupInternal()
 	{
 		// Search for dormant locks.
@@ -718,47 +622,6 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 			CleanupDelay = Math.Max(Math.Min(1000000 / (Locks.Count + 1), 10000), 1000); // Don't allow for less than.
 	}
 
-	//		private void TrimPool<T>(ConcurrentQueue<T> target, int maxCount = 0, bool dispose = false, bool allowExceptions = true)
-	//		{
-	//			if (target is null)
-	//				throw new ArgumentNullException(nameof(target));
-	//			Contract.EndContractBlock();
-
-	//			//var d = new List<IDisposable>();
-	//			try
-	//			{
-	//				while (!target.IsEmpty && target.Count > maxCount && target.TryDequeue(out var context))
-	//				{
-	//					if (!dispose) continue;
-	//					if (!(context is IDisposable i)) continue;
-	//					//d.Add(i);
-	//					try
-	//					{
-	//						i.Dispose();
-	//					}
-	//					catch
-	//					{
-	//						if (allowExceptions)
-	//							throw;
-	//					}
-	//				}
-
-	//#if DEBUG
-	//				if (target.Where(t => t is DisposableBase).Cast<DisposableBase>().Any(t => t.WasDisposed))
-	//					Debug.Fail("Disposed object retained in bag.");	
-	//#endif
-
-	//			}
-	//			catch
-	//			{
-	//				if (allowExceptions)
-	//					throw;
-	//			}
-	//			// Complete the disposing in another thread since the profiler may be confused about it's reference at snapshot time.
-	//			//if (dispose && d.Any())
-	//			//Task.Factory.StartNew(() => d.DisposeAll());
-	//		}
-
 	/// <inheritdoc />
 	protected override void OnCleanup()
 	{
@@ -810,6 +673,6 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 		ContextPool.Dispose();
 		if (!lockHeld) LockPool.Dispose();
 	}
-	#endregion
+#endregion
 
 }
