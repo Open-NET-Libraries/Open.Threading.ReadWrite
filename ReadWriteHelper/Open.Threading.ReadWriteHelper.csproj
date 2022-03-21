@@ -10,9 +10,10 @@
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<Authors>electricessence</Authors>
 		<Description>
-			A utility for read-write synchronizing individual key and values for any object.
+A utility for read-write synchronizing by context.  Useful for synchronizing collections that are not inherently thread-safe.
+Reference to Open.Threading.ReadWrite exposes extensions for ReaderWriterLockSlim.
 
-			Part of the "Open" set of libraries.
+Part of the "Open" set of libraries.
 		</Description>
 		<PackageTags>collections;extensions;threadsafe;thread safe; thread safety;readwrite;read write;readerwriterlock;readerwriterlockslim</PackageTags>
 		<Copyright>© electricessence (Oren F.) All rights reserved.</Copyright>
