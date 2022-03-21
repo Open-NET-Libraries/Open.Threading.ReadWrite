@@ -26,6 +26,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\ReadWriteHelper\Open.Threading.ReadWriteHelper.csproj" />
 		<ProjectReference Include="..\source\Open.Threading.ReadWrite.csproj" />
 	</ItemGroup>
 

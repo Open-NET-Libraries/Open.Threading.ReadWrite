@@ -38,9 +38,6 @@
         <member name="T:Open.Threading.IReadWriteLockingHandler`1">
             <inheritdoc />
         </member>
-        <member name="P:Open.Threading.IReadWriteLockingHandler`1.Sync">
-            <summary>The underlying object used for synchornization.</summary>
-        </member>
         <member name="M:Open.Threading.IReadWriteLockingHandler`1.Try(Open.Threading.LockType,Open.Threading.LockTimeout,System.Action{`0},System.Boolean)">
             <summary>Acquires a lock of the requested <see cref="T:Open.Threading.LockType"/> from the provider before invoking the <paramref name="action"/>.</summary>
             <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadUpgradable(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action{System.Threading.ReaderWriterLockSlim},System.Boolean)" />
@@ -395,9 +392,6 @@
             </summary>
         </member>
         <member name="T:Open.Threading.ReadWriteLockingHandler">
-            <inheritdoc />
-        </member>
-        <member name="P:Open.Threading.ReadWriteLockingHandler.Sync">
             <inheritdoc />
         </member>
         <member name="M:Open.Threading.ReadWriteLockingHandler.#ctor(System.Threading.ReaderWriterLockSlim)">

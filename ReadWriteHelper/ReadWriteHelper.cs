@@ -1,7 +1,9 @@
 ﻿using Open.Disposable;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 
 namespace Open.Threading;
 
@@ -9,13 +11,13 @@ namespace Open.Threading;
 /// Utility class for synchronizing read write access to different resources in the same domain/scope.
 /// This essentially has its own garbage collector to prevent building up memory/references to unused locks.
 /// </summary>
-public class ReadWriteHelper<TKey> : DeferredCleanupBase
+public class ReadWriteHelper<TContext> : DeferredCleanupBase
 {
 	#region Construction
 	readonly IObjectPool<object> ContextPool;
 	readonly ConcurrentQueueObjectPool<ReaderWriterLockTracker> LockPool;
 
-	readonly ConcurrentDictionary<TKey, ReaderWriterLockTracker> Locks
+	readonly ConcurrentDictionary<TContext, ReaderWriterLockTracker> Locks
 		= new();
 
 	readonly ReaderWriterLockSlim CleanupManager
@@ -61,7 +63,7 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 
 	#region Lock Acquisition
 	private bool TryGetLock(
-		TKey key,
+		TContext key,
 		LockType type,
 		object context,
 #if NETSTANDARD2_1_OR_GREATER
@@ -184,7 +186,7 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 	#region TryExecute
 	// Funnel all delegates through here to ensure proper procedure for getting and releasing locks.
 	private bool TryExecute(
-		TKey key,
+		TContext key,
 		LockType type,
 		int timeout,
 		bool throwIfTimeout,
@@ -210,7 +212,7 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 	}
 
 	private bool TryExecute<T>(
-		TKey key,
+		TContext key,
 		LockType type,
 		int timeout,
 		bool throwIfTimeout,
@@ -241,7 +243,7 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 
 	// Funnel all delegates through here to ensure proper procedure for getting and releasing locks.
 	private bool TryExecute(
-		TKey key,
+		TContext key,
 		LockType type,
 		int timeout,
 		bool throwIfTimeout,
@@ -268,7 +270,7 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 
 	// Funnel all delegates through here to ensure proper procedure for getting and releasing locks.
 	private bool TryExecute<T>(
-		TKey key,
+		TContext key,
 		LockType type,
 		int timeout,
 		bool throwIfTimeout,
@@ -298,302 +300,100 @@ public class ReadWriteHelper<TKey> : DeferredCleanupBase
 	}
 	#endregion
 
-	#region Read/Write Public Interface
-	/// <returns><b>true</b> if the action was invoked; otherwise <b>false</b> if a timeout is reached.</returns>
-	/// <inheritdoc cref="Read(TKey, Action)"/>
-	public bool TryRead(
-		TKey key, LockTimeout timeout, Action closure, bool throwIfTimeout = false)
-		=> TryExecute(key, LockType.Read, timeout, throwIfTimeout, closure);
-
-	/// <returns><b>true</b> if the action was invoked; otherwise <b>false</b> if a timeout is reached.</returns>
-	/// <inheritdoc cref="Read{T}(TKey, Func{T})"/>
-	public bool TryRead<T>(
-		TKey key, LockTimeout timeout, out T result, Func<T> valueFactory, bool throwIfTimeout = false)
-		=> TryExecute(key, LockType.Read, timeout, throwIfTimeout, out result, valueFactory);
-
-	/// <inheritdoc cref="TryReadUpgradeable{T}(TKey, LockTimeout, out T, Func{ReaderWriterLockSlim, T}, bool)"/>
-	public bool TryReadUpgradeable(
-		TKey key, LockTimeout timeout, Action<ReaderWriterLockSlim> closure, bool throwIfTimeout = false)
-		=> TryExecute(key, LockType.UpgradableRead, timeout, throwIfTimeout, closure);
-
-	/// <summary>
-	/// Executes the query within an upgradeable read lock based upon the <paramref name="key"/> provided.
-	/// </summary>
-	/// <inheritdoc cref="TryRead(TKey, LockTimeout, Action, bool)"/>
-	public bool TryReadUpgradeable<T>(
-		TKey key, LockTimeout timeout, out T result, Func<ReaderWriterLockSlim, T> closure, bool throwIfTimeout = false)
-		=> TryExecute(key, LockType.UpgradableRead, timeout, throwIfTimeout, out result, closure);
-
-	/// <returns><b>true</b> if the action was invoked; otherwise <b>false</b> if a timeout is reached.</returns>
-	/// <inheritdoc cref="Write{T}(TKey, Func{T})"/>
-	public bool TryWrite(TKey key, LockTimeout timeout, Action closure, bool throwIfTimeout = false)
-		=> TryExecute(key, LockType.Write, timeout, throwIfTimeout, closure);
-
-	/// <inheritdoc cref="TryWrite(TKey, LockTimeout, Action, bool)"/>
-	public bool TryWrite<T>(
-		TKey key, LockTimeout timeout, out T result, Func<T> closure, bool throwIfTimeout = false)
-		=> TryExecute(key, LockType.Write, timeout, throwIfTimeout, out result, closure);
-
-	/// <summary>
-	/// Invokes the <paramref name="action"/> within a <b>read</b> lock based upon the <paramref name="key"/> provided.
-	/// </summary>
-	public void Read(TKey key, Action action)
+	/// <inheritdoc />
+	public readonly record struct ContextHandler : IReadWriteLockingHandler<ReaderWriterLockSlim>
 	{
-		var ok = TryExecute(key, LockType.Read, Timeout.Infinite, true, action);
-		Debug.Assert(ok);
-	}
-	/// <summary>
-	/// Invokes the <paramref name="valueFactory"/> within a <b>read</b> lock based upon the <paramref name="key"/> provided.
-	/// </summary>
-	/// <returns>The result of the <paramref name="valueFactory"/>.</returns>
-	public T Read<T>(TKey key, Func<T> valueFactory)
-	{
-		var ok = TryExecute(key, LockType.Read, Timeout.Infinite, true, out var result, valueFactory);
-		Debug.Assert(ok);
-		return result;
-	}
+		/// <summary>The key by which the context of locking occurs.</summary>
+		public TContext Context { get; }
 
-	/// <summary>
-	/// Invokes the <paramref name="action"/> within a <b>write</b> lock based upon the <paramref name="key"/> provided.
-	/// </summary>
-	public void Write(TKey key, Action action)
-	{
-		var ok = TryExecute(key, LockType.Write, Timeout.Infinite, true, action);
-		Debug.Assert(ok);
-	}
+		/// <inheritdoc />
+		private readonly ReadWriteHelper<TContext> Helper;
 
-	/// <returns>Returns the result from the <paramref name="valueFactory"/>.</returns>
-	/// <inheritdoc cref="Write(TKey, Action)"/>
-	public T Write<T>(TKey key, Func<T> valueFactory)
-	{
-		var ok = TryExecute(key, LockType.Write, Timeout.Infinite, true, out var result, valueFactory);
-		Debug.Assert(ok);
-		return result;
-	}
-
-	/// <summary>
-	/// Method for synchronizing write access.  Starts by executing the condition without a lock.
-	/// Note: Passing a bool to the condition when a lock is acquired helps if it is important to the cosuming logic to avoid recursive locking.
-	/// </summary>
-	/// <param name="key">The key to lock by.</param>
-	/// <param name="condition">Takes a bool where false means no lock and true means a <b>write</b> lock.  Returns true if it should execute the query Action. ** NOT THREAD SAFE</param>
-	/// <param name="closure">Action to execute once a lock is acquired.</param>
-	/// <param name="timeout">Indicates if and for how long a timeout is used to acquire a lock.</param>
-	/// <param name="throwIfTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
-	/// <returns>Returns false if a timeout is reached.</returns>
-	protected bool WriteConditional(TKey key, Func<bool, bool> condition, Action closure, LockTimeout timeout = default, bool throwIfTimeout = false)
-	{
-		if (condition is null)
-			throw new ArgumentNullException(nameof(condition));
-		Contract.EndContractBlock();
-
-		var lockHeld = true;
-		if (condition(false)) // Thread safety is broken here.  But this method can be used as internal utility.
+		internal ContextHandler(ReadWriteHelper<TContext> helper, TContext context)
 		{
-			lockHeld = Write(key, () =>
-			{
-				if (condition(true))
-					closure();
-			},
-			timeout,
-			throwIfTimeout);
+			Helper = helper;
+			Context = context;
 		}
 
-		return lockHeld;
+		/// <inheritdoc />
+		[ExcludeFromCodeCoverage]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public bool Try(LockType lockType, LockTimeout timeout, Action<ReaderWriterLockSlim> action, bool throwIfTimeout = false)
+			=> Helper.TryExecute(Context, lockType, timeout, throwIfTimeout, action);
+
+		/// <inheritdoc />
+		[ExcludeFromCodeCoverage]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public bool Try<T>(LockType lockType, LockTimeout timeout, out T result, Func<ReaderWriterLockSlim, T> action, bool throwIfTimeout = false)
+			=> Helper.TryExecute(Context, lockType, timeout, throwIfTimeout, out result, action);
+
+		/// <inheritdoc />
+		[ExcludeFromCodeCoverage]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public bool Try(LockType lockType, LockTimeout timeout, Action action, bool throwIfTimeout = false)
+			=> Helper.TryExecute(Context, lockType, timeout, throwIfTimeout, action);
+
+		/// <inheritdoc />
+		[ExcludeFromCodeCoverage]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public bool Try<T>(LockType lockType, LockTimeout timeout, out T result, Func<T> action, bool throwIfTimeout = false)
+			=> Helper.TryExecute(Context, lockType, timeout, throwIfTimeout, out result, action);
+
+		/// <inheritdoc />
+		[ExcludeFromCodeCoverage]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public bool TryRead(LockTimeout timeout, Action action, bool throwIfTimeout = false)
+			=> Helper.TryExecute(Context, LockType.Read, timeout, throwIfTimeout, action);
+
+		/// <inheritdoc />
+		[ExcludeFromCodeCoverage]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public bool TryRead<T>(LockTimeout timeout, out T result, Func<T> action, bool throwIfTimeout = false)
+			=> Helper.TryExecute(Context, LockType.Read, timeout, throwIfTimeout, out result, action);
+
+		/// <inheritdoc />
+		[ExcludeFromCodeCoverage]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public bool TryReadUpgradable(LockTimeout timeout, Action<ReaderWriterLockSlim> action, bool throwIfTimeout = false)
+			=> Helper.TryExecute(Context, LockType.UpgradableRead, timeout, throwIfTimeout, action);
+
+		/// <inheritdoc />
+		[ExcludeFromCodeCoverage]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public bool TryReadUpgradable<T>(LockTimeout timeout, out T result, Func<ReaderWriterLockSlim, T> action, bool throwIfTimeout = false)
+			=> Helper.TryExecute(Context, LockType.UpgradableRead, timeout, throwIfTimeout, out result, action);
+
+		/// <inheritdoc />
+		[ExcludeFromCodeCoverage]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public bool TryReadUpgradable(LockTimeout timeout, Action action, bool throwIfTimeout = false)
+			=> Helper.TryExecute(Context, LockType.UpgradableRead, timeout, throwIfTimeout, action);
+
+		/// <inheritdoc />
+		[ExcludeFromCodeCoverage]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public bool TryReadUpgradable<T>(LockTimeout timeout, out T result, Func<T> action, bool throwIfTimeout = false)
+			=> Helper.TryExecute(Context, LockType.UpgradableRead, timeout, throwIfTimeout, out result, action);
+
+		/// <inheritdoc />
+		[ExcludeFromCodeCoverage]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public bool TryWrite(LockTimeout timeout, Action action, bool throwIfTimeout = false)
+			=> Helper.TryExecute(Context, LockType.Write, timeout, throwIfTimeout, action);
+
+		/// <inheritdoc />
+		[ExcludeFromCodeCoverage]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public bool TryWrite<T>(LockTimeout timeout, out T result, Func<T> action, bool throwIfTimeout = false)
+			=> Helper.TryExecute(Context, LockType.Write, timeout, throwIfTimeout, out result, action);
 	}
 
 	/// <summary>
-	/// Method for synchronizing write access.  Starts by executing the condition with a <b>read</b> lock.  Then if necessary after releasing the read lock, acquires a <b>write</b> lock.
-	/// Note: Passing a LockType to the condition when a lock is acquired helps if it is important to the cosuming logic to avoid recursive locking.
+	/// Exposes an interface for read-write operations by context.
 	/// </summary>
-	/// <param name="key">The key to lock by.</param>
-	/// <param name="condition">Takes a bool where false means a <b>read</b> lock and true means a <b>write</b> lock.  Returns true if it should execute the query Action.</param>
-	/// <param name="closure">Action to execute once a lock is acquired.</param>
-	/// <param name="timeout">Indicates if and for how long a timeout is used to acquire a lock.</param>
-	/// <param name="throwIfTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
-	/// <returns>Returns false if a timeout is reached.</returns>
-	public bool ReadWriteConditional(
-		TKey key, Func<LockType, bool> condition, Action closure,
-		LockTimeout timeout = default, bool throwIfTimeout = false)
-	{
-		if (condition is null)
-			throw new ArgumentNullException(nameof(condition));
-		Contract.EndContractBlock();
+	public ContextHandler Context(TContext context) => new(this, context);
 
-		var c = false;
-		var lockHeld = TryRead(key, () => c = condition(LockType.Read), timeout, throwIfTimeout);
-		if (lockHeld && c)
-		{
-			lockHeld = Write(key, () =>
-			{
-				if (condition(LockType.Write))
-					closure();
-			},
-			timeout, throwIfTimeout);
-		}
-
-		return lockHeld;
-	}
-
-	/// <summary>
-	/// Method for synchronizing write access.  Starts by executing the condition with a <b>read</b> lock.  Then if necessary after releasing the read lock, acquires a <b>write</b> lock.
-	/// Note: Passing a LockType to the condition when a lock is acquired helps if it is important to the cosuming logic to avoid recursive locking.
-	/// </summary>
-	/// <param name="result">The result from the operation.</param>
-	/// <param name="key">The key to lock by.</param>
-	/// <param name="condition">Takes a bool where false means a <b>read</b> lock and true means a <b>write</b> lock.  Returns true if it should execute the query Action.</param>
-	/// <param name="closure">Action to execute once a lock is acquired.</param>
-	/// <param name="timeout">Indicates if and for how long a timeout is used to acquire a lock.</param>
-	/// <param name="throwIfTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
-	/// <returns>Returns false if a timeout is reached.</returns>
-	public bool ReadWriteConditional<T>(
-		ref T result,
-		TKey key, Func<LockType, bool> condition, Func<T> closure,
-		LockTimeout timeout = default, bool throwIfTimeout = false)
-	{
-		if (condition is null)
-			throw new ArgumentNullException(nameof(condition));
-		Contract.EndContractBlock();
-
-		var r = result;
-		bool c = false, written = false;
-		var lockHeld = TryRead(key, () => c = condition(LockType.Read), timeout, throwIfTimeout);
-		if (lockHeld && c)
-		{
-			lockHeld = Write(key, out written, () =>
-			{
-				var w = condition(LockType.Write);
-				if (w) r = closure();
-				return w;
-			},
-			timeout, throwIfTimeout);
-		}
-
-		if (written)
-			result = r;
-
-		return lockHeld;
-	}
-
-	/// <summary>
-	/// Method for synchronizing write access.  Starts by executing the condition with an upgradeable read lock before acquiring a <b>write</b> lock.
-	/// Note: Passing a boolean to the condition when a lock is acquired helps if it is important to the cosuming logic to avoid recursive locking.
-	/// </summary>
-	/// <param name="key">The key to lock by.</param>
-	/// <param name="condition">Takes a bool where false means a <b>read</b> lock and true means a <b>write</b> lock.  Returns true if it should execute the query Action.</param>
-	/// <param name="closure">Action to execute once a lock is acquired.</param>
-	/// <param name="timeout">Indicates if and for how long a timeout is used to acquire a lock.</param>
-	/// <param name="throwIfTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
-	/// <returns>Returns false if a timeout is reached.</returns>
-	public bool ReadUpgradeableWriteConditional(
-		TKey key, Func<bool> condition, Action<bool> closure,
-		LockTimeout timeout = default,
-		bool throwIfTimeout = false)
-	{
-		if (condition is null)
-			throw new ArgumentNullException(nameof(condition));
-		Contract.EndContractBlock();
-
-		// Initialize true so that if only only reading it still returns true.
-		var writeLocked = true;
-		// Since read upgradable ensures that no changes should be made to the condition, then it is acceptable to not recheck the condition after lock..
-		var readLocked = ReadUpgradeable(key, (rwlock) =>
-		{
-			if (!condition())
-				return;
-
-			// Synchronize lock acquisistion.
-			writeLocked = rwlock.Write(closure, timeout, throwIfTimeout);
-		}, timeout, throwIfTimeout);
-
-		return readLocked && writeLocked;
-	}
-
-	/// <summary>
-	/// Method for synchronizing write access.  Starts by executing the condition with an upgradeable read lock before acquiring a <b>write</b> lock.
-	/// Note: Passing a boolean to the condition when a lock is acquired helps if it is important to the cosuming logic to avoid recursive locking.
-	/// </summary>
-	/// <param name="result">The result from the operation.</param>
-	/// <param name="key">The key to lock by.</param>
-	/// <param name="condition">Takes a bool where false means a <b>read</b> lock and true means a <b>write</b> lock.  Returns true if it should execute the query Action.</param>
-	/// <param name="closure">Action to execute once a lock is acquired.</param>
-	/// <param name="timeout">Indicates if and for how long a timeout is used to acquire a lock.</param>
-	/// <param name="throwIfTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
-	/// <returns>Returns false if a timeout is reached.</returns>
-	public bool ReadUpgradeableWriteConditional<T>(
-		ref T result,
-		TKey key, Func<bool> condition, Func<bool, T> closure,
-		LockTimeout timeout = default, bool throwIfTimeout = false)
-	{
-		if (condition is null)
-			throw new ArgumentNullException(nameof(condition));
-		Contract.EndContractBlock();
-
-		var r = result;
-		var writeLocked = true; // Initialize true so that if only only reading it still returns true.
-		var written = false;
-		// Since read upgradable ensures that no changes should be made to the condition, then it is acceptable to not recheck the condition after lock..
-		var readLocked = ReadUpgradeable(key, (rwlock) =>
-		{
-			if (!condition()) return;
-			// Synchronize lock acquisistion.
-			writeLocked = rwlock.Write(timeout, out r, closure);
-			written = true;
-		}, timeout, throwIfTimeout);
-		if (written) result = r;
-
-		return readLocked && writeLocked;
-	}
-
-	/// <summary>
-	/// ReaderWriterLockSlim extension for synchronizing write access.  Starts by executing the condition with a <b>read</b> lock.
-	/// Then if necessary executes the condition with an upgradeable read lock before acquiring a <b>write</b> lock.
-	/// </summary>
-	/// <param name="key">The key to lock by.</param>
-	/// <param name="condition">Takes a bool where false means a <b>read</b> lock and true means a <b>write</b> lock.  Returns true if it should execute the query Action.</param>
-	/// <param name="closure">Action to execute once a lock is acquired.</param>
-	/// <param name="timeout">Indicates if and for how long a timeout is used to acquire a lock.</param>
-	/// <param name="throwIfTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
-	/// <returns>Returns false if a timeout is reached.</returns>
-	public bool ReadWriteConditionalOptimized(
-		TKey key, Func<LockType, bool> condition, Action<bool> closure,
-		LockTimeout timeout = default, bool throwIfTimeout = false)
-	{
-		if (condition is null)
-			throw new ArgumentNullException(nameof(condition));
-		Contract.EndContractBlock();
-
-		var c = false;
-		var lockHeld = TryRead(key, () => c = condition(LockType.Read), timeout, throwIfTimeout);
-		return lockHeld && (!c || ReadUpgradeableWriteConditional(key, () => condition(LockType.UpgradableRead), closure, timeout, throwIfTimeout));
-	}
-
-	/// <summary>
-	/// ReaderWriterLockSlim extension for synchronizing write access.  Starts by executing the condition with a <b>read</b> lock.
-	/// Then if necessary executes the condition with an upgradeable read lock before acquiring a <b>write</b> lock.
-	/// </summary>
-	/// <param name="key">The key to lock by.</param>
-	/// <param name="result">The result from the operation.</param>
-	/// <param name="condition">Takes a bool where false means a <b>read</b> lock and true means a <b>write</b> lock.  Returns true if it should execute the query Action.</param>
-	/// <param name="closure">Action to execute once a lock is acquired.</param>
-	/// <param name="timeout">Indicates if and for how long a timeout is used to acquire a lock.</param>
-	/// <param name="throwIfTimeout">If this parameter is true, then if a timeout addValue is reached, an exception is thrown.</param>
-	/// <returns>Returns false if a timeout is reached.</returns>
-	public bool ReadWriteConditionalOptimized<T>(
-		TKey key, ref T result, Func<LockType, bool> condition, Func<bool, T> closure,
-		LockTimeout timeout = default, bool throwIfTimeout = false)
-	{
-		if (condition is null)
-			throw new ArgumentNullException(nameof(condition));
-		Contract.EndContractBlock();
-
-		var c = false;
-		var lockHeld = TryRead(key, () => c = condition(LockType.Read), timeout, throwIfTimeout);
-		return lockHeld && (!c || ReadUpgradeableWriteConditional(ref result, key, () => condition(LockType.UpgradableRead), closure, timeout, throwIfTimeout));
-	}
-#endregion
-
-#region Cleanpup & Dispose
+	#region Cleanpup & Dispose
 	private void CleanupInternal()
 	{
 		// Search for dormant locks.

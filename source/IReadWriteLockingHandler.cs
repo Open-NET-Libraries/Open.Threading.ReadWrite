@@ -39,9 +39,6 @@ public interface IReadWriteLockingHandler
 /// <inheritdoc />
 public interface IReadWriteLockingHandler<TSync> : IReadWriteLockingHandler
 {
-	/// <summary>The underlying object used for synchornization.</summary>
-	TSync Sync { get; }
-
 	/// <summary>Acquires a lock of the requested <see cref="LockType"/> from the provider before invoking the <paramref name="action"/>.</summary>
 	/// <inheritdoc cref="ReaderWriterLockSlimExensions.TryReadUpgradable(ReaderWriterLockSlim, LockTimeout, Action{ReaderWriterLockSlim}, bool)" />
 	bool Try(LockType lockType, LockTimeout timeout, Action<TSync> action, bool throwIfTimeout = false);

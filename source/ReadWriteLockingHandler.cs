@@ -7,8 +7,7 @@ namespace Open.Threading;
 [ExcludeFromCodeCoverage]
 public readonly record struct ReadWriteLockingHandler : IReadWriteLockingHandler<ReaderWriterLockSlim>
 {
-	/// <inheritdoc />
-	public ReaderWriterLockSlim Sync { get; }
+	private readonly ReaderWriterLockSlim Sync;
 
 	/// <inheritdoc />
 	public ReadWriteLockingHandler(ReaderWriterLockSlim rwlock)
