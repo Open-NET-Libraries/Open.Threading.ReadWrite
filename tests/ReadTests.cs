@@ -39,6 +39,7 @@ public class ReadTests : ReaderWriterLockSlimTestBase
 	public override bool ActionTest()
 	{
 		Assert.Throws<ArgumentNullException>(() => Sync.Read(default!));
+		Assert.Throws<ArgumentNullException>(() => Sync.Handler().Read(default!));
 
 		var ok = false;
 		Sync.Read(() =>
@@ -81,6 +82,7 @@ public class ReadTests : ReaderWriterLockSlimTestBase
 	public override bool ValueTest()
 	{
 		Assert.Throws<ArgumentNullException>(() => Sync.Read(default(Func<bool>)!));
+		Assert.Throws<ArgumentNullException>(() => Sync.Handler().Read(default(Func<bool>)!));
 
 		Sync.Read(() =>
 		{

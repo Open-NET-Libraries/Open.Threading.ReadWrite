@@ -55,6 +55,8 @@ public class ReadWriteTests : LockTestBase
 		bool ran = false;
 		Assert.Throws<ArgumentNullException>(() => Sync.ReadWriteConditional(1000, ref ran, _ => false, default!));
 		Assert.Throws<ArgumentNullException>(() => Sync.ReadWriteConditional(1000, ref ran, default!, () => false));
+		Assert.Throws<ArgumentNullException>(() => Sync.Handler().ReadWriteConditional(1000, ref ran, _ => false, default!));
+		Assert.Throws<ArgumentNullException>(() => Sync.Handler().ReadWriteConditional(1000, ref ran, default!, () => false));
 
 		ran.Should().BeFalse();
 
@@ -123,6 +125,13 @@ public class ReadWriteTests : LockTestBase
 				return true;
 			}, Run).Should().BeFalse();
 			ran.Should().BeFalse();
+
+			Sync.Handler().TryReadWriteConditional(1, hasLock =>
+			{
+				Sync.IsUpgradeableReadLockHeld.Should().Be(hasLock);
+				return true;
+			}, Run).Should().BeFalse();
+			ran.Should().BeFalse();
 		});
 
 		Sync.TryReadWriteConditional(1000, hasLock =>
@@ -141,6 +150,29 @@ public class ReadWriteTests : LockTestBase
 		ran.Should().BeFalse();
 
 		Sync.TryReadWriteConditional(1000, hasLock =>
+		{
+			Sync.IsUpgradeableReadLockHeld.Should().Be(hasLock);
+			return true;
+		}, Run).Should().BeTrue();
+		ran.Should().BeTrue();
+
+		ran = false;
+		Sync.Handler().TryReadWriteConditional(1000, hasLock =>
+		{
+			hasLock.Should().BeFalse();
+			Sync.IsUpgradeableReadLockHeld.Should().BeFalse();
+			return false;
+		}, Run).Should().BeFalse();
+		ran.Should().BeFalse();
+
+		Sync.Handler().TryReadWriteConditional(1000, hasLock =>
+		{
+			Sync.IsUpgradeableReadLockHeld.Should().Be(hasLock);
+			return !hasLock;
+		}, Run).Should().BeFalse();
+		ran.Should().BeFalse();
+
+		Sync.Handler().TryReadWriteConditional(1000, hasLock =>
 		{
 			Sync.IsUpgradeableReadLockHeld.Should().Be(hasLock);
 			return true;
@@ -175,6 +207,14 @@ public class ReadWriteTests : LockTestBase
 			}, Run).Should().BeFalse();
 			ran.Should().BeFalse();
 			result.Should().BeFalse();
+
+			Sync.Handler().TryReadWriteConditional(1, ref result, hasLock =>
+			{
+				Sync.IsUpgradeableReadLockHeld.Should().Be(hasLock);
+				return true;
+			}, Run).Should().BeFalse();
+			ran.Should().BeFalse();
+			result.Should().BeFalse();
 		});
 
 		Sync.TryReadWriteConditional(1000, ref result, hasLock =>
@@ -201,6 +241,32 @@ public class ReadWriteTests : LockTestBase
 		}, Run).Should().BeTrue();
 		ran.Should().BeTrue();
 		result.Should().BeTrue();
+
+		ran = result = false;
+		Sync.Handler().TryReadWriteConditional(1000, ref result, hasLock =>
+		{
+			hasLock.Should().BeFalse();
+			Sync.IsUpgradeableReadLockHeld.Should().BeFalse();
+			return false;
+		}, Run).Should().BeFalse();
+		ran.Should().BeFalse();
+		result.Should().BeFalse();
+
+		Sync.Handler().TryReadWriteConditional(1000, ref result, hasLock =>
+		{
+			Sync.IsUpgradeableReadLockHeld.Should().Be(hasLock);
+			return !hasLock;
+		}, Run).Should().BeFalse();
+		ran.Should().BeFalse();
+		result.Should().BeFalse();
+
+		Sync.Handler().TryReadWriteConditional(1000, ref result, hasLock =>
+		{
+			Sync.IsUpgradeableReadLockHeld.Should().Be(hasLock);
+			return true;
+		}, Run).Should().BeTrue();
+		ran.Should().BeTrue();
+		result.Should().BeTrue();
 	}
 
 	[Fact]
@@ -208,6 +274,8 @@ public class ReadWriteTests : LockTestBase
 	{
 		Assert.Throws<ArgumentNullException>(() => Sync.GetOrCreateValue<object>(default!, () => default!));
 		Assert.Throws<ArgumentNullException>(() => Sync.GetOrCreateValue<object>(() => default!, default!));
+		Assert.Throws<ArgumentNullException>(() => Sync.Handler().GetOrCreateValue<object>(default!, () => default!));
+		Assert.Throws<ArgumentNullException>(() => Sync.Handler().GetOrCreateValue<object>(() => default!, default!));
 
 		bool created = false;
 		object Create()
@@ -219,6 +287,12 @@ public class ReadWriteTests : LockTestBase
 		Sync.GetOrCreateValue(() => x, Create).Should().Be(x);
 		created.Should().BeFalse();
 		Sync.GetOrCreateValue(() => null, Create).Should().NotBe(x);
+		created.Should().BeTrue();
+
+		created = false;
+		Sync.Handler().GetOrCreateValue(() => x, Create).Should().Be(x);
+		created.Should().BeFalse();
+		Sync.Handler().GetOrCreateValue(() => null, Create).Should().NotBe(x);
 		created.Should().BeTrue();
 	}
 }

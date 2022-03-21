@@ -3,6 +3,7 @@
  * Some portions of this code are based upon code from Stephen Cleary's Nitro library.
  */
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 
@@ -13,6 +14,11 @@ namespace Open.Threading;
 /// </summary>
 public static partial class ReaderWriterLockSlimExensions
 {
+	/// <summary>
+	/// Returns an struct that implements <see cref="ReadWriteLockingHandler"/> for using a standard inteface to safely acquire and release locks.
+	/// </summary>
+	public static ReadWriteLockingHandler Handler(this ReaderWriterLockSlim target) => new(target);
+
 	/// <summary>
 	/// Extension for checking lock status... Should only be used for debugging.
 	/// </summary>
@@ -121,9 +127,11 @@ public static partial class ReaderWriterLockSlimExensions
 	public static ILock? TryGetLock(
 		this ReaderWriterLockSlim target,
 		LockType lockType,
-		LockTimeout timeout)
+		LockTimeout timeout,
+		bool throwIfTimeout = false)
 	{
-		var iLock = GetLock(target, lockType, timeout, false);
+		var iLock = GetLock(target, lockType, timeout, throwIfTimeout);
+		Debug.Assert(iLock.LockHeld || !throwIfTimeout);
 		if (iLock.LockHeld) return iLock;
 		iLock.Dispose();
 		return null;

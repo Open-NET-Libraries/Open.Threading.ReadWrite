@@ -111,6 +111,10 @@ public class WriteTests : ReaderWriterLockSlimTestBase
 		Assert.Throws<ArgumentNullException>(() => Sync.WriteConditional(1000, _ => false, default!));
 		Assert.Throws<ArgumentNullException>(() => Sync.WriteConditional(1000, default(Func<bool>)!, () => { }));
 		Assert.Throws<ArgumentNullException>(() => Sync.WriteConditional(1000, default(Func<bool, bool>)!, () => { }));
+		Assert.Throws<ArgumentNullException>(() => Sync.Handler().WriteConditional(1000, () => false, default!));
+		Assert.Throws<ArgumentNullException>(() => Sync.Handler().WriteConditional(1000, _ => false, default!));
+		Assert.Throws<ArgumentNullException>(() => Sync.Handler().WriteConditional(1000, default(Func<bool>)!, () => { }));
+		Assert.Throws<ArgumentNullException>(() => Sync.Handler().WriteConditional(1000, default(Func<bool, bool>)!, () => { }));
 
 		ran.Should().BeFalse();
 
@@ -127,14 +131,31 @@ public class WriteTests : ReaderWriterLockSlimTestBase
 		}, Run).Should().BeFalse();
 		ran.Should().BeFalse();
 
+		Sync.Handler().WriteConditional(() =>
+		{
+			Sync.IsUpgradeableReadLockHeld.Should().BeTrue();
+			return false;
+		}, Run).Should().BeFalse();
+		ran.Should().BeFalse();
+
 		TestTimeout(() =>
 		{
 			Assert.Throws<TimeoutException>(() => Sync.WriteConditional(1, () => true, Run));
 			Assert.Throws<TimeoutException>(() => Sync.WriteConditional(1, _ => true, Run));
+			Assert.Throws<TimeoutException>(() => Sync.Handler().WriteConditional(1, () => true, Run));
+			Assert.Throws<TimeoutException>(() => Sync.Handler().WriteConditional(1, _ => true, Run));
 			ran.Should().BeFalse();
 		});
 
 		Sync.WriteConditional(() =>
+		{
+			Sync.IsUpgradeableReadLockHeld.Should().BeTrue();
+			return true;
+		}, Run).Should().BeTrue();
+		ran.Should().BeTrue();
+
+		ran = false;
+		Sync.Handler().WriteConditional(() =>
 		{
 			Sync.IsUpgradeableReadLockHeld.Should().BeTrue();
 			return true;
@@ -163,6 +184,29 @@ public class WriteTests : ReaderWriterLockSlimTestBase
 			return true;
 		}, Run).Should().BeTrue();
 		ran.Should().BeTrue();
+
+		ran = false;
+		Sync.Handler().WriteConditional(hasLock =>
+		{
+			hasLock.Should().BeFalse();
+			Sync.IsUpgradeableReadLockHeld.Should().BeFalse();
+			return false;
+		}, Run).Should().BeFalse();
+		ran.Should().BeFalse();
+
+		Sync.Handler().WriteConditional(hasLock =>
+		{
+			Sync.IsUpgradeableReadLockHeld.Should().Be(hasLock);
+			return !hasLock;
+		}, Run).Should().BeFalse();
+		ran.Should().BeFalse();
+
+		Sync.Handler().WriteConditional(hasLock =>
+		{
+			Sync.IsUpgradeableReadLockHeld.Should().Be(hasLock);
+			return true;
+		}, Run).Should().BeTrue();
+		ran.Should().BeTrue();
 	}
 
 	[Fact]
@@ -173,6 +217,10 @@ public class WriteTests : ReaderWriterLockSlimTestBase
 		Assert.Throws<ArgumentNullException>(() => Sync.WriteConditional(1000, ref ran, _ => false, default!));
 		Assert.Throws<ArgumentNullException>(() => Sync.WriteConditional(1000, ref ran, default(Func<bool>)!, () => false));
 		Assert.Throws<ArgumentNullException>(() => Sync.WriteConditional(1000, ref ran, default(Func<bool, bool>)!, () => false));
+		Assert.Throws<ArgumentNullException>(() => Sync.Handler().WriteConditional(1000, ref ran, () => false, default!));
+		Assert.Throws<ArgumentNullException>(() => Sync.Handler().WriteConditional(1000, ref ran, _ => false, default!));
+		Assert.Throws<ArgumentNullException>(() => Sync.Handler().WriteConditional(1000, ref ran, default(Func<bool>)!, () => false));
+		Assert.Throws<ArgumentNullException>(() => Sync.Handler().WriteConditional(1000, ref ran, default(Func<bool, bool>)!, () => false));
 
 		ran.Should().BeFalse();
 
@@ -192,6 +240,14 @@ public class WriteTests : ReaderWriterLockSlimTestBase
 		ran.Should().BeFalse();
 		result.Should().BeFalse();
 
+		Sync.Handler().WriteConditional(ref result, () =>
+		{
+			Sync.IsUpgradeableReadLockHeld.Should().BeTrue();
+			return false;
+		}, Run).Should().BeFalse();
+		ran.Should().BeFalse();
+		result.Should().BeFalse();
+
 		TestTimeout(() =>
 		{
 			Assert.Throws<TimeoutException>(() => Sync.WriteConditional(1, ref result, () => true, Run));
@@ -201,6 +257,15 @@ public class WriteTests : ReaderWriterLockSlimTestBase
 		});
 
 		Sync.WriteConditional(ref result, () =>
+		{
+			Sync.IsUpgradeableReadLockHeld.Should().BeTrue();
+			return true;
+		}, Run).Should().BeTrue();
+		ran.Should().BeTrue();
+		result.Should().BeTrue();
+
+		result = ran = false;
+		Sync.Handler().WriteConditional(ref result, () =>
 		{
 			Sync.IsUpgradeableReadLockHeld.Should().BeTrue();
 			return true;
@@ -233,6 +298,32 @@ public class WriteTests : ReaderWriterLockSlimTestBase
 		}, Run).Should().BeTrue();
 		ran.Should().BeTrue();
 		result.Should().BeTrue();
+
+		result = ran = false;
+		Sync.Handler().WriteConditional(ref result, hasLock =>
+		{
+			hasLock.Should().BeFalse();
+			Sync.IsUpgradeableReadLockHeld.Should().BeFalse();
+			return false;
+		}, Run).Should().BeFalse();
+		ran.Should().BeFalse();
+		result.Should().BeFalse();
+
+		Sync.Handler().WriteConditional(ref result, hasLock =>
+		{
+			Sync.IsUpgradeableReadLockHeld.Should().Be(hasLock);
+			return !hasLock;
+		}, Run).Should().BeFalse();
+		ran.Should().BeFalse();
+		result.Should().BeFalse();
+
+		Sync.Handler().WriteConditional(ref result, hasLock =>
+		{
+			Sync.IsUpgradeableReadLockHeld.Should().Be(hasLock);
+			return true;
+		}, Run).Should().BeTrue();
+		ran.Should().BeTrue();
+		result.Should().BeTrue();
 	}
 
 	[Fact]
@@ -259,6 +350,13 @@ public class WriteTests : ReaderWriterLockSlimTestBase
 		}, Run).Should().BeFalse();
 		ran.Should().BeFalse();
 
+		Sync.Handler().TryWriteConditional(1000, () =>
+		{
+			Sync.IsUpgradeableReadLockHeld.Should().BeTrue();
+			return false;
+		}, Run).Should().BeFalse();
+		ran.Should().BeFalse();
+
 		TestTimeout(() =>
 		{
 			Sync.TryWriteConditional(1, () =>
@@ -272,9 +370,29 @@ public class WriteTests : ReaderWriterLockSlimTestBase
 				return true;
 			}, Run).Should().BeFalse();
 			ran.Should().BeFalse();
+
+			Sync.Handler().TryWriteConditional(1, () =>
+			{
+				Sync.IsUpgradeableReadLockHeld.Should().BeTrue();
+				return true;
+			}, Run).Should().BeFalse();
+			Sync.Handler().TryWriteConditional(1, hasLock =>
+			{
+				Sync.IsUpgradeableReadLockHeld.Should().Be(hasLock);
+				return true;
+			}, Run).Should().BeFalse();
+			ran.Should().BeFalse();
 		});
 
 		Sync.TryWriteConditional(1000, () =>
+		{
+			Sync.IsUpgradeableReadLockHeld.Should().BeTrue();
+			return true;
+		}, Run).Should().BeTrue();
+		ran.Should().BeTrue();
+
+		ran = false;
+		Sync.Handler().TryWriteConditional(1000, () =>
 		{
 			Sync.IsUpgradeableReadLockHeld.Should().BeTrue();
 			return true;
@@ -298,6 +416,29 @@ public class WriteTests : ReaderWriterLockSlimTestBase
 		ran.Should().BeFalse();
 
 		Sync.TryWriteConditional(1000, hasLock =>
+		{
+			Sync.IsUpgradeableReadLockHeld.Should().Be(hasLock);
+			return true;
+		}, Run).Should().BeTrue();
+		ran.Should().BeTrue();
+
+		ran = false;
+		Sync.Handler().TryWriteConditional(1000, hasLock =>
+		{
+			hasLock.Should().BeFalse();
+			Sync.IsUpgradeableReadLockHeld.Should().BeFalse();
+			return false;
+		}, Run).Should().BeFalse();
+		ran.Should().BeFalse();
+
+		Sync.Handler().TryWriteConditional(1000, hasLock =>
+		{
+			Sync.IsUpgradeableReadLockHeld.Should().Be(hasLock);
+			return !hasLock;
+		}, Run).Should().BeFalse();
+		ran.Should().BeFalse();
+
+		Sync.Handler().TryWriteConditional(1000, hasLock =>
 		{
 			Sync.IsUpgradeableReadLockHeld.Should().Be(hasLock);
 			return true;
@@ -332,6 +473,14 @@ public class WriteTests : ReaderWriterLockSlimTestBase
 		ran.Should().BeFalse();
 		result.Should().BeFalse();
 
+		Sync.Handler().TryWriteConditional(1000, ref result, () =>
+		{
+			Sync.IsUpgradeableReadLockHeld.Should().BeTrue();
+			return false;
+		}, Run).Should().BeFalse();
+		ran.Should().BeFalse();
+		result.Should().BeFalse();
+
 		TestTimeout(() =>
 		{
 			Sync.TryWriteConditional(1, ref result, () =>
@@ -346,9 +495,31 @@ public class WriteTests : ReaderWriterLockSlimTestBase
 			}, Run).Should().BeFalse();
 			ran.Should().BeFalse();
 			result.Should().BeFalse();
+
+			Sync.Handler().TryWriteConditional(1, ref result, () =>
+			{
+				Sync.IsUpgradeableReadLockHeld.Should().BeFalse();
+				return true;
+			}, Run).Should().BeFalse();
+			Sync.Handler().TryWriteConditional(1, ref result, hasLock =>
+			{
+				Sync.IsUpgradeableReadLockHeld.Should().Be(hasLock);
+				return true;
+			}, Run).Should().BeFalse();
+			ran.Should().BeFalse();
+			result.Should().BeFalse();
 		});
 
 		Sync.TryWriteConditional(1000, ref result, () =>
+		{
+			Sync.IsUpgradeableReadLockHeld.Should().BeTrue();
+			return true;
+		}, Run).Should().BeTrue();
+		ran.Should().BeTrue();
+		result.Should().BeTrue();
+
+		result = ran = false;
+		Sync.Handler().TryWriteConditional(1000, ref result, () =>
 		{
 			Sync.IsUpgradeableReadLockHeld.Should().BeTrue();
 			return true;
@@ -375,6 +546,32 @@ public class WriteTests : ReaderWriterLockSlimTestBase
 		result.Should().BeFalse();
 
 		Sync.TryWriteConditional(1000, ref result, hasLock =>
+		{
+			Sync.IsUpgradeableReadLockHeld.Should().Be(hasLock);
+			return true;
+		}, Run).Should().BeTrue();
+		ran.Should().BeTrue();
+		result.Should().BeTrue();
+
+		result = ran = false;
+		Sync.Handler().TryWriteConditional(1000, ref result, hasLock =>
+		{
+			hasLock.Should().BeFalse();
+			Sync.IsUpgradeableReadLockHeld.Should().BeFalse();
+			return false;
+		}, Run).Should().BeFalse();
+		ran.Should().BeFalse();
+		result.Should().BeFalse();
+
+		Sync.Handler().TryWriteConditional(1000, ref result, hasLock =>
+		{
+			Sync.IsUpgradeableReadLockHeld.Should().Be(hasLock);
+			return !hasLock;
+		}, Run).Should().BeFalse();
+		ran.Should().BeFalse();
+		result.Should().BeFalse();
+
+		Sync.Handler().TryWriteConditional(1000, ref result, hasLock =>
 		{
 			Sync.IsUpgradeableReadLockHeld.Should().Be(hasLock);
 			return true;

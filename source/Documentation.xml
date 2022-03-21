@@ -4,6 +4,186 @@
         <name>Open.Threading.ReadWrite</name>
     </assembly>
     <members>
+        <member name="T:Open.Threading.IReadWriteLockingHandler">
+            <summary>
+            A standardized interface for handling operations within a lock.
+            </summary>
+        </member>
+        <member name="M:Open.Threading.IReadWriteLockingHandler.Try(Open.Threading.LockType,Open.Threading.LockTimeout,System.Action,System.Boolean)">
+            <summary>Acquires a lock of the requested <see cref="T:Open.Threading.LockType"/> from the provider before invoking the <paramref name="action"/>.</summary>
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadUpgradable(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action{System.Threading.ReaderWriterLockSlim},System.Boolean)" />
+        </member>
+        <member name="M:Open.Threading.IReadWriteLockingHandler.Try``1(Open.Threading.LockType,Open.Threading.LockTimeout,``0@,System.Func{``0},System.Boolean)">
+            <summary><inheritdoc cref="M:Open.Threading.IReadWriteLockingHandler.Try(Open.Threading.LockType,Open.Threading.LockTimeout,System.Action,System.Boolean)" path="/summary[1]"/></summary>
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadUpgradable``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Threading.ReaderWriterLockSlim,``0},System.Boolean)" />
+        </member>
+        <member name="M:Open.Threading.IReadWriteLockingHandler.TryRead(Open.Threading.LockTimeout,System.Action,System.Boolean)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryRead(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action,System.Boolean)"/>
+        </member>
+        <member name="M:Open.Threading.IReadWriteLockingHandler.TryRead``1(Open.Threading.LockTimeout,``0@,System.Func{``0},System.Boolean)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryRead``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{``0},System.Boolean)" />
+        </member>
+        <member name="M:Open.Threading.IReadWriteLockingHandler.TryReadUpgradable(Open.Threading.LockTimeout,System.Action,System.Boolean)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadUpgradable(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action{System.Threading.ReaderWriterLockSlim},System.Boolean)" />
+        </member>
+        <member name="M:Open.Threading.IReadWriteLockingHandler.TryReadUpgradable``1(Open.Threading.LockTimeout,``0@,System.Func{``0},System.Boolean)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadUpgradable``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Threading.ReaderWriterLockSlim,``0},System.Boolean)" />
+        </member>
+        <member name="M:Open.Threading.IReadWriteLockingHandler.TryWrite(Open.Threading.LockTimeout,System.Action,System.Boolean)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryWrite(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action,System.Boolean)" />
+        </member>
+        <member name="M:Open.Threading.IReadWriteLockingHandler.TryWrite``1(Open.Threading.LockTimeout,``0@,System.Func{``0},System.Boolean)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryWrite``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{``0},System.Boolean)" />
+        </member>
+        <member name="T:Open.Threading.IReadWriteLockingHandler`1">
+            <inheritdoc />
+        </member>
+        <member name="P:Open.Threading.IReadWriteLockingHandler`1.Sync">
+            <summary>The underlying object used for synchornization.</summary>
+        </member>
+        <member name="M:Open.Threading.IReadWriteLockingHandler`1.Try(Open.Threading.LockType,Open.Threading.LockTimeout,System.Action{`0},System.Boolean)">
+            <summary>Acquires a lock of the requested <see cref="T:Open.Threading.LockType"/> from the provider before invoking the <paramref name="action"/>.</summary>
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadUpgradable(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action{System.Threading.ReaderWriterLockSlim},System.Boolean)" />
+        </member>
+        <member name="M:Open.Threading.IReadWriteLockingHandler`1.Try``1(Open.Threading.LockType,Open.Threading.LockTimeout,``0@,System.Func{`0,``0},System.Boolean)">
+            <summary><inheritdoc cref="M:Open.Threading.IReadWriteLockingHandler`1.Try(Open.Threading.LockType,Open.Threading.LockTimeout,System.Action{`0},System.Boolean)" path="/summary[1]"/></summary>
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadUpgradable``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Threading.ReaderWriterLockSlim,``0},System.Boolean)" />
+        </member>
+        <member name="M:Open.Threading.IReadWriteLockingHandler`1.TryReadUpgradable(Open.Threading.LockTimeout,System.Action{`0},System.Boolean)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadUpgradable(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action{System.Threading.ReaderWriterLockSlim},System.Boolean)" />
+        </member>
+        <member name="M:Open.Threading.IReadWriteLockingHandler`1.TryReadUpgradable``1(Open.Threading.LockTimeout,``0@,System.Func{`0,``0},System.Boolean)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadUpgradable``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Threading.ReaderWriterLockSlim,``0},System.Boolean)" />
+        </member>
+        <member name="T:Open.Threading.ReadWriteLockingProviderExtensions">
+            <summary>
+            Extensions for <see cref="T:Open.Threading.IReadWriteLockingHandler`1"/>.
+            </summary>
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.Read(Open.Threading.IReadWriteLockingHandler,Open.Threading.LockTimeout,System.Action)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.Read(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action)"/>
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.Read``1(Open.Threading.IReadWriteLockingHandler,Open.Threading.LockTimeout,System.Func{``0})">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.Read``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{``0})" />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.Read(Open.Threading.IReadWriteLockingHandler,System.Action)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.Read(System.Threading.ReaderWriterLockSlim,System.Action)" />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.Read``1(Open.Threading.IReadWriteLockingHandler,System.Func{``0})">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.Read``1(System.Threading.ReaderWriterLockSlim,System.Func{``0})" />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.ReadUpgradable``1(Open.Threading.IReadWriteLockingHandler{``0},Open.Threading.LockTimeout,System.Action{``0})">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action{System.Threading.ReaderWriterLockSlim})" />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.ReadUpgradable``2(Open.Threading.IReadWriteLockingHandler{``0},Open.Threading.LockTimeout,System.Func{``0,``1})">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{System.Threading.ReaderWriterLockSlim,``0})" />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.ReadUpgradable``1(Open.Threading.IReadWriteLockingHandler{``0},System.Action{``0})">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable(System.Threading.ReaderWriterLockSlim,System.Action{System.Threading.ReaderWriterLockSlim})" />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.ReadUpgradable``2(Open.Threading.IReadWriteLockingHandler{``0},System.Func{``0,``1})">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable``1(System.Threading.ReaderWriterLockSlim,System.Func{System.Threading.ReaderWriterLockSlim,``0})" />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.ReadUpgradable(Open.Threading.IReadWriteLockingHandler,Open.Threading.LockTimeout,System.Action)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action{System.Threading.ReaderWriterLockSlim})" />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.ReadUpgradable``1(Open.Threading.IReadWriteLockingHandler,Open.Threading.LockTimeout,System.Func{``0})">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{System.Threading.ReaderWriterLockSlim,``0})" />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.ReadUpgradable(Open.Threading.IReadWriteLockingHandler,System.Action)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable(System.Threading.ReaderWriterLockSlim,System.Action{System.Threading.ReaderWriterLockSlim})" />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.ReadUpgradable``1(Open.Threading.IReadWriteLockingHandler,System.Func{``0})">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable``1(System.Threading.ReaderWriterLockSlim,System.Func{System.Threading.ReaderWriterLockSlim,``0})" />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.Write(Open.Threading.IReadWriteLockingHandler,Open.Threading.LockTimeout,System.Action)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.Write(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action)" />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.Write``1(Open.Threading.IReadWriteLockingHandler,Open.Threading.LockTimeout,System.Func{``0})">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.Write``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{``0})" />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.Write(Open.Threading.IReadWriteLockingHandler,System.Action)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.Write(System.Threading.ReaderWriterLockSlim,System.Action)" />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.Write``1(Open.Threading.IReadWriteLockingHandler,System.Func{``0})">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.Write``1(System.Threading.ReaderWriterLockSlim,System.Func{``0})" />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.TryWriteConditional(Open.Threading.IReadWriteLockingHandler,Open.Threading.LockTimeout,System.Func{System.Boolean},System.Action,System.Boolean)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditional(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{System.Boolean},System.Action,System.Boolean)"/>
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.TryWriteConditional``1(Open.Threading.IReadWriteLockingHandler,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean},System.Func{``0},System.Boolean)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean},System.Func{``0},System.Boolean)"/>
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.TryWriteConditional(Open.Threading.IReadWriteLockingHandler,Open.Threading.LockTimeout,System.Func{System.Boolean,System.Boolean},System.Action,System.Boolean)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditional(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{System.Boolean,System.Boolean},System.Action,System.Boolean)"/>
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.TryWriteConditional``1(Open.Threading.IReadWriteLockingHandler,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0},System.Boolean)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0},System.Boolean)"/>
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.WriteConditional(Open.Threading.IReadWriteLockingHandler,Open.Threading.LockTimeout,System.Func{System.Boolean},System.Action)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.WriteConditional(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{System.Boolean},System.Action)"/>
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.WriteConditional``1(Open.Threading.IReadWriteLockingHandler,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean},System.Func{``0})">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.WriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean},System.Func{``0})"/>
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.WriteConditional(Open.Threading.IReadWriteLockingHandler,Open.Threading.LockTimeout,System.Func{System.Boolean,System.Boolean},System.Action)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.WriteConditional(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{System.Boolean,System.Boolean},System.Action)"/>
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.WriteConditional``1(Open.Threading.IReadWriteLockingHandler,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0})">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.WriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0})"/>
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.WriteConditional(Open.Threading.IReadWriteLockingHandler,System.Func{System.Boolean},System.Action)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.WriteConditional(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{System.Boolean},System.Action)"/>
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.WriteConditional``1(Open.Threading.IReadWriteLockingHandler,``0@,System.Func{System.Boolean},System.Func{``0})">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.WriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean},System.Func{``0})"/>
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.WriteConditional(Open.Threading.IReadWriteLockingHandler,System.Func{System.Boolean,System.Boolean},System.Action)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.WriteConditional(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{System.Boolean,System.Boolean},System.Action)"/>
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.WriteConditional``1(Open.Threading.IReadWriteLockingHandler,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0})">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.WriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0})"/>
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.ReadWriteConditional(Open.Threading.IReadWriteLockingHandler,System.Func{System.Boolean,System.Boolean},System.Action)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadWriteConditional(System.Threading.ReaderWriterLockSlim,System.Func{System.Boolean,System.Boolean},System.Action)"/>
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.ReadWriteConditional(Open.Threading.IReadWriteLockingHandler,Open.Threading.LockTimeout,System.Func{System.Boolean,System.Boolean},System.Action)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadWriteConditional(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{System.Boolean,System.Boolean},System.Action)"/>
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.ReadWriteConditional``1(Open.Threading.IReadWriteLockingHandler,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0})">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadWriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0})"/>
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.ReadWriteConditional``1(Open.Threading.IReadWriteLockingHandler,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0})">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadWriteConditional``1(System.Threading.ReaderWriterLockSlim,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0})" />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.TryReadWriteConditional(Open.Threading.IReadWriteLockingHandler,Open.Threading.LockTimeout,System.Func{System.Boolean,System.Boolean},System.Action,System.Boolean)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadWriteConditional(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{System.Boolean,System.Boolean},System.Action,System.Boolean)"/>
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.TryReadWriteConditional``1(Open.Threading.IReadWriteLockingHandler,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0},System.Boolean)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadWriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0},System.Boolean)"/>
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.GetOrCreateValue``1(Open.Threading.IReadWriteLockingHandler,System.Func{``0},System.Func{``0})">
+            <summary>
+            If <paramref name="getValue"/> returns null, the value is acquired from <paramref name="createValue"/>.
+            </summary>
+            <typeparam name="T">The return type.</typeparam>
+            <param name="provider">The <see cref="T:Open.Threading.IReadWriteLockingHandler"/> to acquire a lock from.</param>
+            <param name="getValue">The function to get the value.</param>
+            <param name="createValue">The create value factory.</param>
+            <returns>The value acquired.</returns>
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingProviderExtensions.GetOrCreateValue``1(Open.Threading.IReadWriteLockingHandler,Open.Threading.LockTimeout,System.Func{``0},System.Func{``0})">
+            <summary>
+            If <paramref name="getValue"/> returns null, the value is acquired from <paramref name="createValue"/>.
+            </summary>
+            <typeparam name="T">The return type.</typeparam>
+            <param name="provider">The <see cref="T:Open.Threading.IReadWriteLockingHandler"/> to acquire a lock from.</param>
+            <param name="timeout"><inheritdoc cref="M:Open.Threading.Lock.#ctor(System.Object,Open.Threading.LockTimeout,System.Boolean)" path="/param[@name='timeout']"/></param>
+            <param name="getValue">The function to get the value.</param>
+            <param name="createValue">The create value factory.</param>
+            <returns>The value acquired.</returns>
+            <exception cref="T:System.TimeoutException"><inheritdoc cref="M:Open.Threading.ReadWriteLockingProviderExtensions.Write(Open.Threading.IReadWriteLockingHandler,Open.Threading.LockTimeout,System.Action)" path="/exception"/></exception>
+        </member>
         <member name="T:Open.Threading.ILock">
             <summary>
             A configurable disposable that should be prefixed by a <c>using</c> statement.
@@ -214,9 +394,59 @@
             An enumeration of possible lock types.
             </summary>
         </member>
+        <member name="T:Open.Threading.ReadWriteLockingHandler">
+            <inheritdoc />
+        </member>
+        <member name="P:Open.Threading.ReadWriteLockingHandler.Sync">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingHandler.#ctor(System.Threading.ReaderWriterLockSlim)">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingHandler.Try(Open.Threading.LockType,Open.Threading.LockTimeout,System.Action,System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingHandler.Try``1(Open.Threading.LockType,Open.Threading.LockTimeout,``0@,System.Func{``0},System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingHandler.Try(Open.Threading.LockType,Open.Threading.LockTimeout,System.Action{System.Threading.ReaderWriterLockSlim},System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingHandler.Try``1(Open.Threading.LockType,Open.Threading.LockTimeout,``0@,System.Func{System.Threading.ReaderWriterLockSlim,``0},System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingHandler.TryRead(Open.Threading.LockTimeout,System.Action,System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingHandler.TryRead``1(Open.Threading.LockTimeout,``0@,System.Func{``0},System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingHandler.TryReadUpgradable(Open.Threading.LockTimeout,System.Action{System.Threading.ReaderWriterLockSlim},System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingHandler.TryReadUpgradable``1(Open.Threading.LockTimeout,``0@,System.Func{System.Threading.ReaderWriterLockSlim,``0},System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingHandler.TryReadUpgradable(Open.Threading.LockTimeout,System.Action,System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingHandler.TryReadUpgradable``1(Open.Threading.LockTimeout,``0@,System.Func{``0},System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingHandler.TryWrite(Open.Threading.LockTimeout,System.Action,System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteLockingHandler.TryWrite``1(Open.Threading.LockTimeout,``0@,System.Func{``0},System.Boolean)">
+            <inheritdoc />
+        </member>
         <member name="T:Open.Threading.ReaderWriterLockSlimExensions">
             <summary>
             A collection of extensions for simplifying <b>read</b> / <b>write</b> operations with a <see cref="T:System.Threading.ReaderWriterLockSlim"/>.
+            </summary>
+        </member>
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.Handler(System.Threading.ReaderWriterLockSlim)">
+            <summary>
+            Returns an struct that implements <see cref="T:Open.Threading.ReadWriteLockingHandler"/> for using a standard inteface to safely acquire and release locks.
             </summary>
         </member>
         <member name="M:Open.Threading.ReaderWriterLockSlimExensions.IsLockFree(System.Threading.ReaderWriterLockSlim)">
@@ -247,7 +477,7 @@
             <param name="throwIfTimeout"><inheritdoc cref="M:Open.Threading.Lock.#ctor(System.Object,Open.Threading.LockTimeout,System.Boolean)" path="/param[@name='throwIfTimeout']"/></param>
             <returns>An <see cref="T:Open.Threading.ILock"/> of the type requestd.</returns>
         </member>
-        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryGetLock(System.Threading.ReaderWriterLockSlim,Open.Threading.LockType,Open.Threading.LockTimeout)">
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryGetLock(System.Threading.ReaderWriterLockSlim,Open.Threading.LockType,Open.Threading.LockTimeout,System.Boolean)">
             <remarks>Only returns a lock if one is actually held.</remarks>
             <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.GetLock(System.Threading.ReaderWriterLockSlim,Open.Threading.LockType,Open.Threading.LockTimeout,System.Boolean)"/>
         </member>
@@ -266,7 +496,7 @@
             <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadLock(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout)" path="/exception"/>
             <inheritdoc cref="M:Open.Threading.WriteLock.#ctor(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Boolean)"/>
         </member>
-        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.ReadDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{``0})">
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.ReadDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{``0},System.Boolean)">
             <summary>
             Acquires a <b>read</b> lock from the <paramref name="target"/> before invoking the <paramref name="action"/>.
             </summary>
@@ -274,14 +504,15 @@
             <param name="timeout"><inheritdoc cref="M:Open.Threading.Lock.#ctor(System.Object,Open.Threading.LockTimeout,System.Boolean)" path="/param[@name='timeout']"/></param>
             <param name="result">The <typeparamref name="T"/> value produced by the action.</param>
             <param name="action">The action to invoke once a lock is acquired.</param>
+            <param name="throwIfTimeout">If <b>true</b> and the timeout is reached a <see cref="T:System.TimeoutException"/> will be thrown.</param>
         </member>
         <member name="M:Open.Threading.ReaderWriterLockSlimExensions.Read(System.Threading.ReaderWriterLockSlim,System.Action)">
-            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{``0})"/>
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{``0},System.Boolean)"/>
         </member>
         <member name="M:Open.Threading.ReaderWriterLockSlimExensions.Read(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action)">
             <remarks>Throws a <see cref="T:System.TimeoutException"/> if the timeout is reached and no lock was acquired.</remarks>
             <exception cref="T:System.TimeoutException">If the timeout is reached and no lock is acquired.</exception>
-            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{``0})"/>
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{``0},System.Boolean)"/>
         </member>
         <member name="M:Open.Threading.ReaderWriterLockSlimExensions.Read``1(System.Threading.ReaderWriterLockSlim,System.Func{``0})">
             <returns><inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.Read``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{``0})" path="/returns"/></returns>
@@ -291,38 +522,56 @@
             <returns>The <typeparamref name="T"/> value produced by the action.</returns>
             <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.Read(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action)"/>
         </member>
-        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryRead(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action)">
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryRead(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action,System.Boolean)">
             <summary>Attempts to acquire a <b>read</b> lock within the <paramref name="timeout"/> and invokes the <paramref name="action"/> if a lock is acquired.</summary>
             <returns><b>true</b> if the action was executed; otherwise <b>false</b> because the timeout was reached.</returns>
-            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{``0})"/>
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{``0},System.Boolean)"/>
         </member>
-        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryRead``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{``0})">
-            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryRead(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action)"/>
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryRead``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{``0},System.Boolean)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryRead(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action,System.Boolean)"/>
         </member>
-        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable(System.Threading.ReaderWriterLockSlim,System.Action)">
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable(System.Threading.ReaderWriterLockSlim,System.Action{System.Threading.ReaderWriterLockSlim})">
             <summary>
             Acquires an <b>upgradable read</b> lock from the <paramref name="target"/> before invoking the <paramref name="action"/>.
             </summary>
             <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.Read(System.Threading.ReaderWriterLockSlim,System.Action)"/>
         </member>
-        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action)">
-            <summary><inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable(System.Threading.ReaderWriterLockSlim,System.Action)" path="/summary[1]"/></summary>
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action{System.Threading.ReaderWriterLockSlim})">
+            <summary><inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable(System.Threading.ReaderWriterLockSlim,System.Action{System.Threading.ReaderWriterLockSlim})" path="/summary[1]"/></summary>
             <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.Read(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action)"/>
         </member>
-        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable``1(System.Threading.ReaderWriterLockSlim,System.Func{``0})">
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable``1(System.Threading.ReaderWriterLockSlim,System.Func{System.Threading.ReaderWriterLockSlim,``0})">
             <returns><inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.Read``1(System.Threading.ReaderWriterLockSlim,System.Func{``0})" path="/returns"/></returns>
-            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable(System.Threading.ReaderWriterLockSlim,System.Action)"/>
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable(System.Threading.ReaderWriterLockSlim,System.Action{System.Threading.ReaderWriterLockSlim})"/>
+        </member>
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{System.Threading.ReaderWriterLockSlim,``0})">
+            <returns><inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.Read``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{``0})" path="/returns"/></returns>
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action{System.Threading.ReaderWriterLockSlim})"/>
+        </member>
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadUpgradable(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action{System.Threading.ReaderWriterLockSlim},System.Boolean)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadUpgradable``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Threading.ReaderWriterLockSlim,``0},System.Boolean)"/>
+        </member>
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadUpgradable``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Threading.ReaderWriterLockSlim,``0},System.Boolean)">
+            <summary><inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable(System.Threading.ReaderWriterLockSlim,System.Action{System.Threading.ReaderWriterLockSlim})" path="/summary[1]"/></summary>
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryRead(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action,System.Boolean)"/>
+        </member>
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable(System.Threading.ReaderWriterLockSlim,System.Action)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable(System.Threading.ReaderWriterLockSlim,System.Action{System.Threading.ReaderWriterLockSlim})"/>
+        </member>
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action{System.Threading.ReaderWriterLockSlim})"/>
+        </member>
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable``1(System.Threading.ReaderWriterLockSlim,System.Func{``0})">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action{System.Threading.ReaderWriterLockSlim})"/>
         </member>
         <member name="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{``0})">
-            <returns><inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.Read``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{``0})" path="/returns"/></returns>
-            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action)"/>
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{System.Threading.ReaderWriterLockSlim,``0})"/>
         </member>
-        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadUpgradable(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action)">
-            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadUpgradable``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{``0})"/>
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadUpgradable(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action,System.Boolean)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadUpgradable``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Threading.ReaderWriterLockSlim,``0},System.Boolean)"/>
         </member>
-        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadUpgradable``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{``0})">
-            <summary><inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadUpgradeable(System.Threading.ReaderWriterLockSlim,System.Action)" path="/summary[1]"/></summary>
-            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryRead(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action)"/>
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadUpgradable``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{``0},System.Boolean)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadUpgradable``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Threading.ReaderWriterLockSlim,``0},System.Boolean)"/>
         </member>
         <member name="M:Open.Threading.ReaderWriterLockSlimExensions.ReadWriteConditional(System.Threading.ReaderWriterLockSlim,System.Func{System.Boolean,System.Boolean},System.Action)">
             <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadWriteConditional``1(System.Threading.ReaderWriterLockSlim,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0})"/>
@@ -345,12 +594,12 @@
             <exception cref="T:System.TimeoutException"><inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.Write(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action)" path="/exception"/></exception>
             <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadWriteConditional``1(System.Threading.ReaderWriterLockSlim,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0})" />
         </member>
-        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadWriteConditional(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{System.Boolean,System.Boolean},System.Action)">
-            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadWriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0})" />
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadWriteConditional(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{System.Boolean,System.Boolean},System.Action,System.Boolean)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadWriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0},System.Boolean)" />
         </member>
-        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadWriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0})">
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryReadWriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0},System.Boolean)">
             <remarks><inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadWriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0})" path="/remarks[1]"/></remarks>
-            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0})" />
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0},System.Boolean)" />
         </member>
         <member name="M:Open.Threading.ReaderWriterLockSlimExensions.GetOrCreateValue``1(System.Threading.ReaderWriterLockSlim,System.Func{``0},System.Func{``0})">
             <summary>
@@ -374,13 +623,13 @@
             <returns>The value acquired.</returns>
             <exception cref="T:System.TimeoutException"><inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.Write(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action)" path="/exception"/></exception>
         </member>
-        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.WriteDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Action)">
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.WriteDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Action,System.Boolean)">
             <summary>
             Acquires a <b>write</b> lock from the <paramref name="target"/> before invoking the <paramref name="action"/>.
             </summary>
-            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{``0})"/>
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.ReadDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{``0},System.Boolean)"/>
         </member>
-        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditionalDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0})">
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditionalDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0},System.Boolean)">
             <remarks>
             Starts by testing the <paramref name="condition"/> without a lock, passing a value of <b>false</b> as the parameter.<br/>
             If the <paramref name="condition"/> returns <b>true</b>, an <b>upgradable read</b> lock is acquired and the <paramref name="condition"/> is tested a second time with a value of <b>true</b> as the parameter.
@@ -392,18 +641,19 @@
             <para>The condition to test before invoking the action.</para>
             <para>Will be invoked at least once. A return value of <b>false</b> will skip invoking the action.</para>
             </param>
-            <param name="result"><inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.WriteDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Action)" path="/param[@name='result'][1]"/></param>
-            <param name="action"><inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.WriteDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Action)" path="/param[@name='action'][1]"/></param>
+            <param name="result"><inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.WriteDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Action,System.Boolean)" path="/param[@name='result'][1]"/></param>
+            <param name="action"><inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.WriteDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Action,System.Boolean)" path="/param[@name='action'][1]"/></param>
+            <param name="throwIfTimeout"><inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.WriteDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Action,System.Boolean)" path="/param[@name='throwIfTimeout'][1]"/></param>
             <returns><b>true</b> if the action was invoked and <paramref name="result"/> was updated; otherwise <b>false</b>.</returns>
-            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryWrite(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action)"/>
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryWrite(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action,System.Boolean)"/>
         </member>
         <member name="M:Open.Threading.ReaderWriterLockSlimExensions.Write(System.Threading.ReaderWriterLockSlim,System.Action)">
-            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.WriteDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Action)"/>
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.WriteDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Action,System.Boolean)"/>
         </member>
         <member name="M:Open.Threading.ReaderWriterLockSlimExensions.Write(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action)">
             <remarks>Throws a <see cref="T:System.TimeoutException"/> if the timeout is reached and no lock was acquired.</remarks>
             <exception cref="T:System.TimeoutException">If the timeout is reached and no lock is acquired.</exception>
-            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.WriteDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Action)"/>
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.WriteDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Action,System.Boolean)"/>
         </member>
         <member name="M:Open.Threading.ReaderWriterLockSlimExensions.Write``1(System.Threading.ReaderWriterLockSlim,System.Func{``0})">
             <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.Write(System.Threading.ReaderWriterLockSlim,System.Action)"/>
@@ -413,14 +663,14 @@
             <returns>The <typeparamref name="T"/> value produced by the action.</returns>
             <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.Write(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action)"/>
         </member>
-        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryWrite(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action)">
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryWrite(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action,System.Boolean)">
             <summary>Attempts to acquire a <b>write</b> lock within the <paramref name="timeout"/> and invokes the <paramref name="action"/> if a lock is acquired.</summary>
             <returns><b>true</b> if the action was executed; otherwise <b>false</b> because the timeout was reached.</returns>
-            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.WriteDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Action)"/>
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.WriteDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Action,System.Boolean)"/>
         </member>
-        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryWrite``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{``0})">
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryWrite``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{``0},System.Boolean)">
             <summary>Attempts to acquire a <b>write</b> lock within the <paramref name="timeout"/> and invokes the <paramref name="action"/> if a lock is acquired.</summary>
-            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryRead(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action)"/>
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryRead(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action,System.Boolean)"/>
         </member>
         <member name="M:Open.Threading.ReaderWriterLockSlimExensions.WriteConditional(System.Threading.ReaderWriterLockSlim,System.Func{System.Boolean},System.Action)">
             <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.WriteConditional``1(System.Threading.ReaderWriterLockSlim,``0@,System.Func{System.Boolean},System.Func{``0})"/>
@@ -444,12 +694,12 @@
         </member>
         <member name="M:Open.Threading.ReaderWriterLockSlimExensions.WriteConditional(System.Threading.ReaderWriterLockSlim,System.Func{System.Boolean,System.Boolean},System.Action)">
             <summary><inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.Write``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{``0})" path="/summary[1]"/></summary>
-            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditionalDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0})"/>
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditionalDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0},System.Boolean)"/>
         </member>
         <member name="M:Open.Threading.ReaderWriterLockSlimExensions.WriteConditional(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{System.Boolean,System.Boolean},System.Action)">
             <summary><inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.Write``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{``0})" path="/summary[1]"/></summary>
             <exception cref="T:System.TimeoutException"><inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.Write(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Action)" path="/exception"/></exception>
-            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0})"/>
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0},System.Boolean)"/>
         </member>
         <member name="M:Open.Threading.ReaderWriterLockSlimExensions.WriteConditional``1(System.Threading.ReaderWriterLockSlim,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0})">
             <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.WriteConditional(System.Threading.ReaderWriterLockSlim,System.Func{System.Boolean,System.Boolean},System.Action)"/>
@@ -457,21 +707,21 @@
         <member name="M:Open.Threading.ReaderWriterLockSlimExensions.WriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0})">
             <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.WriteConditional(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{System.Boolean,System.Boolean},System.Action)"/>
         </member>
-        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditional(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{System.Boolean},System.Action)">
-            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean},System.Func{``0})"/>
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditional(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{System.Boolean},System.Action,System.Boolean)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean},System.Func{``0},System.Boolean)"/>
         </member>
-        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean},System.Func{``0})">
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean},System.Func{``0},System.Boolean)">
             <remarks>
             Starts by testing the <paramref name="condition"/> within an <b>upgradable read</b> lock.<br/>
             If the <paramref name="condition"/> then returns <b>true</b>, the lock is upgraded to <b>write</b> and the <paramref name="action"/> is executed.<br/>
             </remarks>
-            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditionalDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0})"/>
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditionalDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0},System.Boolean)"/>
         </member>
-        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditional(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{System.Boolean,System.Boolean},System.Action)">
-            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0})"/>
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditional(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,System.Func{System.Boolean,System.Boolean},System.Action,System.Boolean)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0},System.Boolean)"/>
         </member>
-        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0})">
-            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditionalDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0})"/>
+        <member name="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditional``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0},System.Boolean)">
+            <inheritdoc cref="M:Open.Threading.ReaderWriterLockSlimExensions.TryWriteConditionalDoc``1(System.Threading.ReaderWriterLockSlim,Open.Threading.LockTimeout,``0@,System.Func{System.Boolean,System.Boolean},System.Func{``0},System.Boolean)"/>
         </member>
     </members>
 </doc>

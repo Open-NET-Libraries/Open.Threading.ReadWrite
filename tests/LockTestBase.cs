@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Open.Threading.ReadWrite.Tests;
+﻿namespace Open.Threading.ReadWrite.Tests;
 
 public class LockTestBase
 {

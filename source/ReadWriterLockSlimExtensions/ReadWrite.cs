@@ -85,26 +85,27 @@ public static partial class ReaderWriterLockSlimExensions
 		return true;
 	}
 
-	/// <inheritdoc cref="TryReadWriteConditional{T}(ReaderWriterLockSlim, LockTimeout, ref T, Func{bool, bool}, Func{T})" />
+	/// <inheritdoc cref="TryReadWriteConditional{T}(ReaderWriterLockSlim, LockTimeout, ref T, Func{bool, bool}, Func{T}, bool)" />
 	public static bool TryReadWriteConditional(
 		this ReaderWriterLockSlim target,
 		LockTimeout timeout,
 		Func<bool, bool> condition,
-		Action action)
+		Action action,
+		bool throwIfTimeout = false)
 	{
 		if (condition is null) throw new ArgumentNullException(nameof(condition));
 		if (action is null) throw new ArgumentNullException(nameof(action));
 		Contract.EndContractBlock();
 
-		using (var readLock = new ReadLock(target, timeout, false))
+		using (var readLock = new ReadLock(target, timeout, throwIfTimeout))
 		{
 			if (!readLock.LockHeld || !condition(false)) return false;
 		}
 
-		using var upgradableLock = new UpgradableReadLock(target, timeout, false);
+		using var upgradableLock = new UpgradableReadLock(target, timeout, throwIfTimeout);
 		if (!upgradableLock.LockHeld || !condition(true)) return false;
 
-		using var writeLock = new WriteLock(target, timeout, false);
+		using var writeLock = new WriteLock(target, timeout, throwIfTimeout);
 		if (!writeLock.LockHeld) return false;
 
 		action();
@@ -112,27 +113,28 @@ public static partial class ReaderWriterLockSlimExensions
 	}
 
 	/// <remarks><inheritdoc cref="ReadWriteConditional{T}(ReaderWriterLockSlim, LockTimeout, ref T, Func{bool, bool}, Func{T})" path="/remarks[1]"/></remarks>
-	/// <inheritdoc cref="TryWriteConditional{T}(ReaderWriterLockSlim, LockTimeout, ref T, Func{bool, bool}, Func{T})" />
+	/// <inheritdoc cref="TryWriteConditional{T}(ReaderWriterLockSlim, LockTimeout, ref T, Func{bool, bool}, Func{T}, bool)" />
 	public static bool TryReadWriteConditional<T>(
 		this ReaderWriterLockSlim target,
 		LockTimeout timeout,
 		ref T result,
 		Func<bool, bool> condition,
-		Func<T> action)
+		Func<T> action,
+		bool throwIfTimeout = false)
 	{
 		if (condition is null) throw new ArgumentNullException(nameof(condition));
 		if (action is null) throw new ArgumentNullException(nameof(action));
 		Contract.EndContractBlock();
 
-		using (var readLock = new ReadLock(target, timeout, false))
+		using (var readLock = new ReadLock(target, timeout, throwIfTimeout))
 		{
 			if (!readLock.LockHeld || !condition(false)) return false;
 		}
 
-		using var upgradableLock = new UpgradableReadLock(target, timeout, false);
+		using var upgradableLock = new UpgradableReadLock(target, timeout, throwIfTimeout);
 		if (!upgradableLock.LockHeld || !condition(true)) return false;
 
-		using var writeLock = new WriteLock(target, timeout, false);
+		using var writeLock = new WriteLock(target, timeout, throwIfTimeout);
 		if (!writeLock.LockHeld) return false;
 
 		result = action();
