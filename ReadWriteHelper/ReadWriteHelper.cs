@@ -312,7 +312,7 @@ public class ReadWriteHelper<TContext> : DeferredCleanupBase
 		internal ContextHandler(ReadWriteHelper<TContext> helper, TContext context)
 		{
 			Helper = helper;
-			Context = context;
+			Context = context ?? throw new ArgumentNullException(nameof(context));
 		}
 
 		/// <inheritdoc />

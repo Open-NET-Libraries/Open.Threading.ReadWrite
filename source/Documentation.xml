@@ -230,6 +230,18 @@
             If <b>false</b> and no lock could be acquired, the .LockHeld value will be false.
             </param>
         </member>
+        <member name="M:Open.Threading.Lock.IsValidSyncObject(System.Object)">
+            <summary>
+            Returns true if <paramref name="syncObject"/> is valid for locking.
+            </summary>
+        </member>
+        <member name="M:Open.Threading.Lock.AssertSyncObject(System.Object)">
+            <summary>
+            Throws an exception if <paramref name="syncObject"/> is not valid for locking.
+            </summary>
+            <exception cref="T:System.ArgumentNullException">If <paramref name="syncObject"/> is null.</exception>
+            <exception cref="T:System.ArgumentException">If <paramref name="syncObject"/> is not valid for locking.</exception>
+        </member>
         <member name="M:Open.Threading.Lock.op_Implicit(Open.Threading.Lock)~System.Boolean">
             <inheritdoc cref="P:Open.Threading.ILock.LockHeld"/>
         </member>

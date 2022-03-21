@@ -48,6 +48,29 @@ public readonly struct Lock : ILock
 		LockHeld = true;
 	}
 
+	/// <summary>
+	/// Returns true if <paramref name="syncObject"/> is valid for locking.
+	/// </summary>
+	public static bool IsValidSyncObject(object? syncObject)
+		=> syncObject switch // Avoid the lock object being immutable...
+		{
+			null or string or Type or ValueType => false,
+			_ => true,
+		};
+
+	/// <summary>
+	/// Throws an exception if <paramref name="syncObject"/> is not valid for locking.
+	/// </summary>
+	/// <exception cref="ArgumentNullException">If <paramref name="syncObject"/> is null.</exception>
+	/// <exception cref="ArgumentException">If <paramref name="syncObject"/> is not valid for locking.</exception>
+	public static void AssertSyncObject(object? syncObject)
+	{
+		if (syncObject is null)
+			throw new ArgumentNullException(nameof(syncObject));
+		if (syncObject is string or Type or ValueType)
+			throw new ArgumentException($"Is not valid sync object. Invalid type: ({syncObject.GetType()})", nameof(syncObject));
+	}
+
 	/// <inheritdoc cref="ILock.LockHeld"/>
 	[ExcludeFromCodeCoverage]
 	public static implicit operator bool(Lock monitor) => monitor.LockHeld;

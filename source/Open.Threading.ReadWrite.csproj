@@ -19,7 +19,7 @@
 		<PackageProjectUrl>https://github.com/Open-NET-Libraries/Open.Threading.ReadWrite/</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Open-NET-Libraries/Open.Threading.ReadWrite/</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
-		<Version>2.0.0-preview2</Version>
+		<Version>2.0.0-preview3</Version>
 		<PackageReleaseNotes></PackageReleaseNotes>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>

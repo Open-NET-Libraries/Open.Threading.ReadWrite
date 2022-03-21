@@ -31,4 +31,27 @@ public class MonitorLockTests : LockTestBase
 			sync.LockHeld.Should().BeTrue();
 		}
 	}
+
+	struct Test { }
+
+	[Theory]
+	[InlineData(null)]
+	[InlineData(true)]
+	[InlineData(false)]
+	[InlineData("hello")]
+	[InlineData(0)]
+	[InlineData(1)]
+	public void InvalidSyncObjectTests(object? syncObject)
+	{
+		Lock.IsValidSyncObject(syncObject).Should().BeFalse();
+		if(syncObject is null)
+			Assert.Throws<ArgumentNullException>(() => Lock.AssertSyncObject(syncObject));
+		else
+			Assert.Throws<ArgumentException>(() => Lock.AssertSyncObject(syncObject));
+	}
+
+	[Fact]
+	public void StructSyncObjectTests()
+		=> InvalidSyncObjectTests(new Test());
+
 }
