@@ -53,5 +53,4 @@ public class MonitorLockTests : LockTestBase
 	[Fact]
 	public void StructSyncObjectTests()
 		=> InvalidSyncObjectTests(new Test());
-
 }
