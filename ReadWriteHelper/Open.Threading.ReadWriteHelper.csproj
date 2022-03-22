@@ -35,7 +35,7 @@ Part of the "Open" set of libraries.
 	<ItemGroup>
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
 		<PackageReference Include="Open.Disposable.ObjectPools" Version="2.8.2" />
-		<PackageReference Include="Open.Threading.ReadWrite" Version="2.0.0-preview3" />
+		<PackageReference Include="Open.Threading.ReadWrite" Version="2.0.1" />
 	</ItemGroup>
 
 	<ItemGroup>

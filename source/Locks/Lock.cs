@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Contracts;
 
 namespace Open.Threading;
 
@@ -36,7 +37,7 @@ public readonly struct Lock : ILock
 		LockTimeout timeout = default,
 		bool throwIfTimeout = true)
 	{
-		_target = target ?? throw new ArgumentNullException(nameof(target));
+		_target = AssertSyncObject(target);
 		if (timeout.IsFinite)
 		{
 			LockHeld = Monitor.TryEnter(target, timeout);
@@ -63,12 +64,17 @@ public readonly struct Lock : ILock
 	/// </summary>
 	/// <exception cref="ArgumentNullException">If <paramref name="syncObject"/> is null.</exception>
 	/// <exception cref="ArgumentException">If <paramref name="syncObject"/> is not valid for locking.</exception>
-	public static void AssertSyncObject(object? syncObject)
+#if NETSTANDARD2_1_OR_GREATER
+	[return: NotNull]
+#endif
+	public static object AssertSyncObject(object? syncObject)
 	{
 		if (syncObject is null)
 			throw new ArgumentNullException(nameof(syncObject));
 		if (syncObject is string or Type or ValueType)
 			throw new ArgumentException($"Is not valid sync object. Invalid type: ({syncObject.GetType()})", nameof(syncObject));
+		Contract.EndContractBlock();
+		return syncObject;
 	}
 
 	/// <inheritdoc cref="ILock.LockHeld"/>
