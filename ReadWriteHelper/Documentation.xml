@@ -1,0 +1,83 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Open.Threading.ReadWriteHelper</name>
+    </assembly>
+    <members>
+        <member name="T:Open.Threading.ReadWriteHelper`1">
+            <summary>
+            Utility class for synchronizing read write access to different resources in the same domain/scope.
+            This essentially has its own garbage collector to prevent building up memory/references to unused locks.
+            </summary>
+        </member>
+        <member name="M:Open.Threading.ReadWriteHelper`1.#ctor(System.Boolean)">
+            <summary>
+            Constructs a <see cref="T:Open.Threading.ReadWriteHelper`1"/>.
+            </summary>
+        </member>
+        <member name="P:Open.Threading.ReadWriteHelper`1.RecursionPolicy">
+            <summary>
+            The <see cref="T:System.Threading.LockRecursionPolicy"/> being used.
+            </summary>
+        </member>
+        <member name="T:Open.Threading.ReadWriteHelper`1.ContextHandler">
+            <inheritdoc />
+        </member>
+        <member name="P:Open.Threading.ReadWriteHelper`1.ContextHandler.Context">
+            <summary>The key by which the context of locking occurs.</summary>
+        </member>
+        <member name="F:Open.Threading.ReadWriteHelper`1.ContextHandler.Helper">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteHelper`1.ContextHandler.Try(Open.Threading.LockType,Open.Threading.LockTimeout,System.Action{System.Threading.ReaderWriterLockSlim},System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteHelper`1.ContextHandler.Try``1(Open.Threading.LockType,Open.Threading.LockTimeout,``0@,System.Func{System.Threading.ReaderWriterLockSlim,``0},System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteHelper`1.ContextHandler.Try(Open.Threading.LockType,Open.Threading.LockTimeout,System.Action,System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteHelper`1.ContextHandler.Try``1(Open.Threading.LockType,Open.Threading.LockTimeout,``0@,System.Func{``0},System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteHelper`1.ContextHandler.TryRead(Open.Threading.LockTimeout,System.Action,System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteHelper`1.ContextHandler.TryRead``1(Open.Threading.LockTimeout,``0@,System.Func{``0},System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteHelper`1.ContextHandler.TryReadUpgradable(Open.Threading.LockTimeout,System.Action{System.Threading.ReaderWriterLockSlim},System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteHelper`1.ContextHandler.TryReadUpgradable``1(Open.Threading.LockTimeout,``0@,System.Func{System.Threading.ReaderWriterLockSlim,``0},System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteHelper`1.ContextHandler.TryReadUpgradable(Open.Threading.LockTimeout,System.Action,System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteHelper`1.ContextHandler.TryReadUpgradable``1(Open.Threading.LockTimeout,``0@,System.Func{``0},System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteHelper`1.ContextHandler.TryWrite(Open.Threading.LockTimeout,System.Action,System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteHelper`1.ContextHandler.TryWrite``1(Open.Threading.LockTimeout,``0@,System.Func{``0},System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteHelper`1.Context(`0)">
+            <summary>
+            Exposes an interface for read-write operations by context.
+            </summary>
+        </member>
+        <member name="M:Open.Threading.ReadWriteHelper`1.UpdateCleanupDelay">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteHelper`1.OnCleanup">
+            <inheritdoc />
+        </member>
+        <member name="M:Open.Threading.ReadWriteHelper`1.OnDispose">
+            <inheritdoc />
+        </member>
+    </members>
+</doc>
