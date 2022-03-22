@@ -20,7 +20,7 @@ public readonly struct UpgradableReadLock : ILock
 	public LockType LockTypeHeld
 		=> LockHeld ? LockType.UpgradableRead : LockType.None;
 
-	/// <summary>Constructs an <see cref="UpgradableReadLock"/> for use with a <c>using</c> block.</summary>
+	/// <summary>Constructs an <see cref="UpgradableReadLock"/> for use with a <see langword="using"/> block.</summary>
 	/// <inheritdoc cref="ReadLock(ReaderWriterLockSlim, LockTimeout, bool)"/>
 	public UpgradableReadLock(
 		ReaderWriterLockSlim target,

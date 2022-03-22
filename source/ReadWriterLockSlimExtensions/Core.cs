@@ -104,7 +104,7 @@ public static partial class ReaderWriterLockSlimExensions
 		target.EnterWriteLock();
 	}
 
-	/// <summary>Constructs a <see cref="ILock"/> of the <paramref name="lockType"/> requested for use with a <c>using</c> block.</summary>
+	/// <summary>Constructs a <see cref="ILock"/> of the <paramref name="lockType"/> requested for use with a <see langword="using"/> block.</summary>
 	/// <param name="target">The <see cref="ReaderWriterLockSlim"/> to acquire a lock from.</param>
 	/// <param name="lockType">The <see cref="LockType"/> to acquire.</param>
 	/// <param name="timeout"><inheritdoc cref="Lock(object, LockTimeout, bool)" path="/param[@name='timeout']"/></param>

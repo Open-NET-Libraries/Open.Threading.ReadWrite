@@ -20,7 +20,7 @@ public readonly struct WriteLock : ILock
 	public LockType LockTypeHeld
 		=> LockHeld ? LockType.Write : LockType.None;
 
-	/// <summary>Constructs a <see cref="WriteLock"/> for use with a <c>using</c> block.</summary>
+	/// <summary>Constructs a <see cref="WriteLock"/> for use with a <see langword="using"/> block.</summary>
 	/// <inheritdoc cref="ReadLock(ReaderWriterLockSlim, LockTimeout, bool)"/>
 	public WriteLock(
 		ReaderWriterLockSlim target,

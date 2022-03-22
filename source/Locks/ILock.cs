@@ -1,12 +1,12 @@
 ﻿namespace Open.Threading;
 
 /// <summary>
-/// A configurable disposable that should be prefixed by a <c>using</c> statement.
+/// A configurable disposable that should be prefixed by a <see langword="using"/> statement.
 /// </summary>
 public interface ILock : IDisposable
 {
 	/// <summary>
-	/// <b>true</b> if a lock was acquired; otherwise <b>false</b>.
+	/// <see langword="true"/> if a lock was acquired; otherwise <see langword="false"/>.
 	/// </summary>
 	bool LockHeld { get; }
 

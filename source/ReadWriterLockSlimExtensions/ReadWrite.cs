@@ -46,9 +46,9 @@ public static partial class ReaderWriterLockSlimExensions
 	/// Acquires a <b>write</b> lock from the <paramref name="target"/> before invoking the <paramref name="action"/>.
 	/// </summary>
 	/// <remarks>
-	/// Starts by testing the <paramref name="condition"/> within a <b>read</b> lock, passing a value of <b>false</b> as the parameter.
-	/// If the <paramref name="condition"/> returns <b>true</b>, the lock is released, an <b>upgradable read</b> lock is acquired, and the <paramref name="condition"/> is tested a second time with a value of <b>true</b> as the parameter.
-	/// If the <paramref name="condition"/> then returns <b>true</b>, the lock is upgraded to <b>write</b> and the <paramref name="action"/> is executed.<br/>
+	/// Starts by testing the <paramref name="condition"/> within a <b>read</b> lock, passing a value of <see langword="false"/> as the parameter.
+	/// If the <paramref name="condition"/> returns <see langword="true"/>, the lock is released, an <b>upgradable read</b> lock is acquired, and the <paramref name="condition"/> is tested a second time with a value of <see langword="true"/> as the parameter.
+	/// If the <paramref name="condition"/> then returns <see langword="true"/>, the lock is upgraded to <b>write</b> and the <paramref name="action"/> is executed.<br/>
 	/// </remarks>
 	/// <inheritdoc cref="WriteConditional{T}(ReaderWriterLockSlim, ref T, Func{bool, bool}, Func{T})"/>
 	[ExcludeFromCodeCoverage]

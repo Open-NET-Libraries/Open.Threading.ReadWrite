@@ -21,16 +21,16 @@ public readonly struct Lock : ILock
 	public LockType LockTypeHeld
 		=> LockHeld ? LockType.Monitor : LockType.None;
 
-	/// <summary>Constructs a <see cref="Lock"/> for use with a <c>using</c> block.</summary>
+	/// <summary>Constructs a <see cref="Lock"/> for use with a <see langword="using"/> block.</summary>
 	/// <param name="target">The object to acquire an exclusive lock for.</param>
 	/// <param name="timeout">
-	/// <para>Indicates for how long a timeout should be used to acquire a lock.<br/><c>default</c> or <c>-1</c> will wait indefinitely.</para>
+	/// <para>Indicates for how long a timeout should be used to acquire a lock.<br/><see langword="default"/> or <c>-1</c> will wait indefinitely.</para>
 	/// <para>Can also be a value of <see cref="TimeSpan"/>, <see cref="int"/>, <see cref="long"/>, or <see cref="double"/>. (Implicit conversion.)</para>
 	/// </param>
 	/// <param name="throwIfTimeout">
-	/// If <b>true</b> (default), a <see cref="TimeoutException"/> exception
+	/// If <see langword="true"/> (default), a <see cref="TimeoutException"/> exception
 	/// will be thrown if a lock cannot be acquired within the timeout.
-	/// If <b>false</b> and no lock could be acquired, the .LockHeld value will be false.
+	/// If <see langword="false"/> and no lock could be acquired, the .LockHeld value will be false.
 	/// </param>
 	public Lock(
 		object target,
@@ -50,7 +50,7 @@ public readonly struct Lock : ILock
 	}
 
 	/// <summary>
-	/// Returns true if <paramref name="syncObject"/> is valid for locking.
+	/// Returns <see langword="true"/> if <paramref name="syncObject"/> is valid for locking.
 	/// </summary>
 	public static bool IsValidSyncObject(object? syncObject)
 		=> syncObject switch // Avoid the lock object being immutable...

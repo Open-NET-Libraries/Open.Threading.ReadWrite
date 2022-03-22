@@ -20,7 +20,7 @@ public readonly struct ReadLock : ILock
 	public LockType LockTypeHeld
 		=> LockHeld ? LockType.Read : LockType.None;
 
-	/// <summary>Constructs a <see cref="ReadLock"/> for use with a <c>using</c> block.</summary>
+	/// <summary>Constructs a <see cref="ReadLock"/> for use with a <see langword="using"/> block.</summary>
 	/// <param name="target">The <see cref="ReaderWriterLockSlim"/> to acquire a lock from.</param>
 	/// <param name="timeout"><inheritdoc cref="Lock(object, LockTimeout, bool)" path="/param[@name='timeout']"/></param>
 	/// <param name="throwIfTimeout"><inheritdoc cref="Lock(object, LockTimeout, bool)" path="/param[@name='throwIfTimeout']"/></param>

@@ -28,20 +28,20 @@ public static partial class ReaderWriterLockSlimExensions
 		bool throwIfTimeout = false) => throw new NotSupportedException();
 
 	/// <remarks>
-	/// Starts by testing the <paramref name="condition"/> without a lock, passing a value of <b>false</b> as the parameter.<br/>
-	/// If the <paramref name="condition"/> returns <b>true</b>, an <b>upgradable read</b> lock is acquired and the <paramref name="condition"/> is tested a second time with a value of <b>true</b> as the parameter.
-	/// If the <paramref name="condition"/> then returns <b>true</b>, the lock is upgraded to <b>write</b> and the <paramref name="action"/> is executed.<br/>
+	/// Starts by testing the <paramref name="condition"/> without a lock, passing a value of <see langword="false"/> as the parameter.<br/>
+	/// If the <paramref name="condition"/> returns <see langword="true"/>, an <b>upgradable read</b> lock is acquired and the <paramref name="condition"/> is tested a second time with a value of <see langword="true"/> as the parameter.
+	/// If the <paramref name="condition"/> then returns <see langword="true"/>, the lock is upgraded to <b>write</b> and the <paramref name="action"/> is executed.<br/>
 	/// </remarks>
 	/// <param name="target"><inheritdoc cref="WriteLock.WriteLock(ReaderWriterLockSlim, LockTimeout, bool)" path="/param[@name='target'][1]"/></param>
 	/// <param name="timeout"><inheritdoc cref="WriteLock.WriteLock(ReaderWriterLockSlim, LockTimeout, bool)" path="/param[@name='timeout'][1]"/></param>
 	/// <param name="condition">
 	/// <para>The condition to test before invoking the action.</para>
-	/// <para>Will be invoked at least once. A return value of <b>false</b> will skip invoking the action.</para>
+	/// <para>Will be invoked at least once. A return value of <see langword="false"/> will skip invoking the action.</para>
 	/// </param>
 	/// <param name="result"><inheritdoc cref="WriteDoc{T}(ReaderWriterLockSlim, LockTimeout, out T, Action, bool)" path="/param[@name='result'][1]"/></param>
 	/// <param name="action"><inheritdoc cref="WriteDoc{T}(ReaderWriterLockSlim, LockTimeout, out T, Action, bool)" path="/param[@name='action'][1]"/></param>
 	/// <param name="throwIfTimeout"><inheritdoc cref="WriteDoc{T}(ReaderWriterLockSlim, LockTimeout, out T, Action, bool)" path="/param[@name='throwIfTimeout'][1]"/></param>
-	/// <returns><b>true</b> if the action was invoked and <paramref name="result"/> was updated; otherwise <b>false</b>.</returns>
+	/// <returns><see langword="true"/> if the action was invoked and <paramref name="result"/> was updated; otherwise <see langword="false"/>.</returns>
 	/// <inheritdoc cref="TryWrite(ReaderWriterLockSlim, LockTimeout, Action, bool)"/>
 #pragma warning disable IDE0079 // Remove unnecessary suppression
 	[SuppressMessage("Style", "IDE0060:Remove unused parameter")]
@@ -98,7 +98,7 @@ public static partial class ReaderWriterLockSlimExensions
 	}
 
 	/// <summary>Attempts to acquire a <b>write</b> lock within the <paramref name="timeout"/> and invokes the <paramref name="action"/> if a lock is acquired.</summary>
-	/// <returns><b>true</b> if the action was executed; otherwise <b>false</b> because the timeout was reached.</returns>
+	/// <returns><see langword="true"/> if the action was executed; otherwise <see langword="false"/> because the timeout was reached.</returns>
 	/// <inheritdoc cref="WriteDoc{T}(ReaderWriterLockSlim, LockTimeout, out T, Action, bool)"/>
 	public static bool TryWrite(
 		this ReaderWriterLockSlim target,
@@ -161,7 +161,7 @@ public static partial class ReaderWriterLockSlimExensions
 	/// </summary>
 	/// <remarks>
 	/// Starts by testing the <paramref name="condition"/> within an <b>upgradable read</b> lock.<br/>
-	/// If the <paramref name="condition"/> then returns <b>true</b>, the lock is upgraded to <b>write</b> and the <paramref name="action"/> is executed.<br/>
+	/// If the <paramref name="condition"/> then returns <see langword="true"/>, the lock is upgraded to <b>write</b> and the <paramref name="action"/> is executed.<br/>
 	/// </remarks>
 	/// <inheritdoc cref="WriteConditional{T}(ReaderWriterLockSlim, ref T, Func{bool, bool}, Func{T})"/>
 	[ExcludeFromCodeCoverage]
@@ -282,7 +282,7 @@ public static partial class ReaderWriterLockSlimExensions
 
 	/// <remarks>
 	/// Starts by testing the <paramref name="condition"/> within an <b>upgradable read</b> lock.<br/>
-	/// If the <paramref name="condition"/> then returns <b>true</b>, the lock is upgraded to <b>write</b> and the <paramref name="action"/> is executed.<br/>
+	/// If the <paramref name="condition"/> then returns <see langword="true"/>, the lock is upgraded to <b>write</b> and the <paramref name="action"/> is executed.<br/>
 	/// </remarks>
 	/// <inheritdoc cref="TryWriteConditionalDoc{T}(ReaderWriterLockSlim, LockTimeout, ref T, Func{bool, bool}, Func{T}, bool)"/>
 	public static bool TryWriteConditional<T>(

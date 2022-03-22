@@ -17,7 +17,7 @@ public static partial class ReaderWriterLockSlimExensions
 	/// <param name="timeout"><inheritdoc cref="Lock(object, LockTimeout, bool)" path="/param[@name='timeout']"/></param>
 	/// <param name="result">The <typeparamref name="T"/> value produced by the action.</param>
 	/// <param name="action">The action to invoke once a lock is acquired.</param>
-	/// <param name="throwIfTimeout">If <b>true</b> and the timeout is reached a <see cref="TimeoutException"/> will be thrown.</param>
+	/// <param name="throwIfTimeout">If <see langword="true"/> and the timeout is reached a <see cref="TimeoutException"/> will be thrown.</param>
 #pragma warning disable IDE0079 // Remove unnecessary suppression
 	[SuppressMessage("Style", "IDE0060:Remove unused parameter")]
 	[SuppressMessage("CodeQuality", "IDE0051:Remove unused private members")]
@@ -70,7 +70,7 @@ public static partial class ReaderWriterLockSlimExensions
 	}
 
 	/// <summary>Attempts to acquire a <b>read</b> lock within the <paramref name="timeout"/> and invokes the <paramref name="action"/> if a lock is acquired.</summary>
-	/// <returns><b>true</b> if the action was executed; otherwise <b>false</b> because the timeout was reached.</returns>
+	/// <returns><see langword="true"/> if the action was executed; otherwise <see langword="false"/> because the timeout was reached.</returns>
 	/// <inheritdoc cref="ReadDoc{T}(ReaderWriterLockSlim, LockTimeout, out T, Func{T}, bool)"/>
 	public static bool TryRead(
 		this ReaderWriterLockSlim target,
