@@ -6,6 +6,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 
 namespace Open.Threading;
 
@@ -140,6 +141,7 @@ public static partial class ReaderWriterLockSlimExensions
 	/// <exception cref="TimeoutException">If no lock could be acquired within the timeout.</exception>
 	/// <inheritdoc cref="ReadLock.ReadLock(ReaderWriterLockSlim, LockTimeout, bool)"/>
 	[ExcludeFromCodeCoverage]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ReadLock ReadLock(
 		this ReaderWriterLockSlim target,
 		LockTimeout timeout)
@@ -147,21 +149,39 @@ public static partial class ReaderWriterLockSlimExensions
 
 	/// <inheritdoc cref="ReadLock.ReadLock(ReaderWriterLockSlim, LockTimeout, bool)"/>
 	[ExcludeFromCodeCoverage]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ReadLock ReadLock(this ReaderWriterLockSlim target)
 		=> new(target);
 
 	/// <inheritdoc cref="ReadLock(ReaderWriterLockSlim, LockTimeout)" path="/exception"/>
 	/// <inheritdoc cref="UpgradableReadLock.UpgradableReadLock(ReaderWriterLockSlim, LockTimeout, bool)"/>
 	[ExcludeFromCodeCoverage]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static UpgradableReadLock UpgradableReadLock(
 		this ReaderWriterLockSlim target,
-		LockTimeout timeout = default)
+		LockTimeout timeout)
 		=> new(target, timeout);
+
+	/// <inheritdoc cref="UpgradableReadLock.UpgradableReadLock(ReaderWriterLockSlim, LockTimeout, bool)"/>
+	[ExcludeFromCodeCoverage]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static UpgradableReadLock UpgradableReadLock(
+		this ReaderWriterLockSlim target)
+		=> new(target);
 
 	/// <inheritdoc cref="ReadLock(ReaderWriterLockSlim, LockTimeout)" path="/exception"/>
 	/// <inheritdoc cref="WriteLock.WriteLock(ReaderWriterLockSlim, LockTimeout, bool)"/>
+	[ExcludeFromCodeCoverage]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static WriteLock WriteLock(
 		this ReaderWriterLockSlim target,
-		LockTimeout timeout = default)
+		LockTimeout timeout)
 		=> new(target, timeout);
+
+	/// <inheritdoc cref="WriteLock.WriteLock(ReaderWriterLockSlim, LockTimeout, bool)"/>
+	[ExcludeFromCodeCoverage]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static WriteLock WriteLock(
+		this ReaderWriterLockSlim target)
+		=> new(target);
 }
