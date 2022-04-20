@@ -20,7 +20,7 @@ Part of the "Open" set of libraries.
 		<PackageProjectUrl>https://github.com/Open-NET-Libraries/Open.Threading.ReadWrite/</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Open-NET-Libraries/Open.Threading.ReadWrite/</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
-		<Version>2.0.2</Version>
+		<Version>2.1.0</Version>
 		<PackageReleaseNotes></PackageReleaseNotes>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
@@ -33,7 +33,7 @@ Part of the "Open" set of libraries.
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
-		<PackageReference Include="Open.Disposable.ObjectPools" Version="2.8.2" />
+		<PackageReference Include="Open.Disposable.ObjectPools" Version="2.9.*" />
 		<PackageReference Include="Open.Threading.ReadWrite" Version="2.0.2" />
 	</ItemGroup>
 
