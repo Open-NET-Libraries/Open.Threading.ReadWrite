@@ -5,11 +5,28 @@
 /// </summary>
 public enum LockType : byte
 {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+	/// <summary>
+	/// No lock type.
+	/// </summary>
 	None,
+
+	/// <summary>
+	/// Read only lock.
+	/// </summary>
 	Read,
+
+	/// <summary>
+	/// Upgradable read lock.
+	/// </summary>
 	UpgradableRead,
+
+	/// <summary>
+	/// Write lock.
+	/// </summary>
 	Write,
+
+	/// <summary>
+	/// Monitor lock.
+	/// </summary>
 	Monitor
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 }

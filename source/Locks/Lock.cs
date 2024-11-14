@@ -67,7 +67,7 @@ public readonly struct Lock : ILock
 #if NETSTANDARD2_1_OR_GREATER
 	[return: NotNull]
 #endif
-	public static object AssertSyncObject(object? syncObject)
+	public static object AssertSyncObject(object syncObject)
 	{
 		if (syncObject is null)
 			throw new ArgumentNullException(nameof(syncObject));

@@ -32,7 +32,7 @@ public class MonitorLockTests : LockTestBase
 		}
 	}
 
-	struct Test { }
+	struct Test;
 
 	[Theory]
 	[InlineData(null)]
@@ -45,7 +45,7 @@ public class MonitorLockTests : LockTestBase
 	{
 		Lock.IsValidSyncObject(syncObject).Should().BeFalse();
 		if(syncObject is null)
-			Assert.Throws<ArgumentNullException>(() => Lock.AssertSyncObject(syncObject));
+			Assert.Throws<ArgumentNullException>(() => Lock.AssertSyncObject(syncObject!));
 		else
 			Assert.Throws<ArgumentException>(() => Lock.AssertSyncObject(syncObject));
 	}

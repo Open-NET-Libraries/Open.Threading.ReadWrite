@@ -32,11 +32,14 @@ public class ReadTests : ReaderWriterLockSlimTestBase
 		using var writeLock = Sync.WriteLock();
 		writeLock.LockHeld.Should().BeTrue();
 		Sync.IsWriteLockHeld.Should().BeTrue();
-		Task.Run(() => Assert.Throws<TimeoutException>(() => Sync.EnterReadLock(1))).Wait();
+		Task.Factory.StartNew(
+			()=> Assert.Throws<TimeoutException>(() => Sync.EnterReadLock(1)),
+			TaskCreationOptions.LongRunning)
+			.Wait();
 	}
 
 	[Fact]
-	public override bool ActionTest()
+	public override void ActionTest()
 	{
 		Assert.Throws<ArgumentNullException>(() => Sync.Read(default!));
 		Assert.Throws<ArgumentNullException>(() => Sync.Handler().Read(default!));
@@ -48,11 +51,10 @@ public class ReadTests : ReaderWriterLockSlimTestBase
 			ok = true;
 		});
 		ok.Should().BeTrue();
-		return ok;
 	}
 
 	[Fact]
-	public override bool TryActionTest()
+	public override void TryActionTest()
 	{
 		Assert.Throws<ArgumentNullException>(() => Sync.TryRead(1000, default!));
 
@@ -63,7 +65,6 @@ public class ReadTests : ReaderWriterLockSlimTestBase
 			ok = true;
 		}).Should().BeTrue();
 		ok.Should().BeTrue();
-		return ok;
 	}
 
 	protected override void ActionTimeoutCore()
@@ -79,7 +80,7 @@ public class ReadTests : ReaderWriterLockSlimTestBase
 	}
 
 	[Fact]
-	public override bool ValueTest()
+	public override void ValueTest()
 	{
 		Assert.Throws<ArgumentNullException>(() => Sync.Read(default(Func<bool>)!));
 		Assert.Throws<ArgumentNullException>(() => Sync.Handler().Read(default(Func<bool>)!));
@@ -89,11 +90,10 @@ public class ReadTests : ReaderWriterLockSlimTestBase
 			Sync.IsReadLockHeld.Should().BeTrue();
 			return true;
 		}).Should().BeTrue();
-		return true;
 	}
 
 	[Fact]
-	public override bool TryValueTest()
+	public override void TryValueTest()
 	{
 		Assert.Throws<ArgumentNullException>(() => Sync.TryRead(1000, out _, default(Func<bool>)!));
 
@@ -105,6 +105,5 @@ public class ReadTests : ReaderWriterLockSlimTestBase
 			return true;
 		}).Should().BeTrue();
 		ok.Should().BeTrue();
-		return ok;
 	}
 }

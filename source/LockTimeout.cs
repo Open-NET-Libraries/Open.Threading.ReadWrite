@@ -69,7 +69,7 @@ public readonly record struct LockTimeout
 	/// <summary>
 	/// Constructs a <see cref="LockTimeout"/> from a <see cref="double"/>.
 	/// </summary>
-	/// <inheritdoc cref="LockTimeout.LockTimeout(long)"/>
+	/// <inheritdoc cref="LockTimeout(long)"/>
 	public LockTimeout(double milliseconds)
 	{
 		if (milliseconds < Timeout.Infinite)

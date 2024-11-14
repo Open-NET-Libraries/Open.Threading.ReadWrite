@@ -1,4 +1,6 @@
-﻿namespace Open.Threading.ReadWrite.Tests;
+﻿using Xunit;
+
+namespace Open.Threading.ReadWrite.Tests;
 
 public class LockTestBase
 {
@@ -17,6 +19,6 @@ public class LockTestBase
 	protected void TestTimeout(Action action)
 	{
 		using var sync = GetBlockingLock();
-		Task.Run(action).Wait();
+		Task.Factory.StartNew(action, TaskCreationOptions.LongRunning).Wait();
 	}
 }

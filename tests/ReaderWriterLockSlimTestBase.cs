@@ -3,15 +3,12 @@ using Xunit;
 
 namespace Open.Threading.ReadWrite.Tests;
 
-public abstract class ReaderWriterLockSlimTestBase : LockTestBase
+public abstract class ReaderWriterLockSlimTestBase(ReaderWriterLockSlim sync)
+	: LockTestBase(sync)
 {
-	protected ReaderWriterLockSlimTestBase(ReaderWriterLockSlim sync) : base(sync)
-	{
-	}
-
 	protected abstract LockType LockType { get; }
 
-	protected ILock GetNullLock() => (default(ReaderWriterLockSlim)!).GetLock(LockType);
+	protected ILock GetNullLock() => default(ReaderWriterLockSlim)!.GetLock(LockType);
 
 	protected ILock GetLock(LockTimeout timeout = default, bool throwIfTimeout = true)
 		 => Sync.GetLock(LockType, timeout, throwIfTimeout);
@@ -28,13 +25,13 @@ public abstract class ReaderWriterLockSlimTestBase : LockTestBase
 
 	public abstract void EnterTest();
 
-	public abstract bool ActionTest();
+	public abstract void ActionTest();
 
-	public abstract bool TryActionTest();
+	public abstract void TryActionTest();
 
-	public abstract bool ValueTest();
+	public abstract void ValueTest();
 
-	public abstract bool TryValueTest();
+	public abstract void TryValueTest();
 
 	protected abstract void ActionTimeoutCore();
 

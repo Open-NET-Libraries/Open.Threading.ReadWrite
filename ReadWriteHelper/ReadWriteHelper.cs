@@ -14,7 +14,7 @@ namespace Open.Threading;
 public class ReadWriteHelper<TContext> : DeferredCleanupBase
 {
 	#region Construction
-	readonly IObjectPool<object> ContextPool;
+	readonly OptimisticArrayObjectPool<object> ContextPool;
 	readonly ConcurrentQueueObjectPool<ReaderWriterLockTracker> LockPool;
 
 	readonly ConcurrentDictionary<TContext, ReaderWriterLockTracker> Locks
@@ -80,9 +80,9 @@ public class ReadWriteHelper<TContext> : DeferredCleanupBase
 			throw new ArgumentNullException(nameof(context));
 		Contract.EndContractBlock();
 
+		tracker = default!;
 		if (WasDisposed)
 		{
-			tracker = default!;
 			handler = default;
 			return false;
 		}
@@ -141,7 +141,6 @@ public class ReadWriteHelper<TContext> : DeferredCleanupBase
 		// We need to not propagate locking..
 		if(r is null)
 		{
-			tracker = default!;
 			handler = default;
 			return false;
 		}
@@ -149,13 +148,12 @@ public class ReadWriteHelper<TContext> : DeferredCleanupBase
 		if(WasDisposed)
 		{
 			r.Dispose();
-			tracker = default!;
 			handler = default;
 			return false;
 		}
 
-		Debug.Assert(tracker?.Lock is not null);
 		tracker = rwl!;
+		Debug.Assert(tracker?.Lock is not null);
 
 		handler = new LockDisposeHandler(r, AfterRelease);
 		return true;

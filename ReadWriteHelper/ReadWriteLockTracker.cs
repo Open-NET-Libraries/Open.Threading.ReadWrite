@@ -5,7 +5,7 @@ namespace Open.Threading;
 
 class ReaderWriterLockTracker : DisposableBase
 {
-	readonly HashSet<object> _registry = new();
+	readonly HashSet<object> _registry = [];
 
 	public ReaderWriterLockSlim? Lock;
 

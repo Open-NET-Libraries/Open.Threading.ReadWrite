@@ -35,11 +35,14 @@ public class ReadUpgradableTests : ReaderWriterLockSlimTestBase
 
 		using var upgradable = Sync.UpgradableReadLock();
 		upgradable.LockHeld.Should().BeTrue();
-		Task.Run(() => Assert.Throws<TimeoutException>(() => Sync.EnterUpgradeableReadLock(1))).Wait();
+		Task.Factory.StartNew(
+			() => Assert.Throws<TimeoutException>(() => Sync.EnterUpgradeableReadLock(1)),
+			TaskCreationOptions.LongRunning)
+			.Wait();
 	}
 
 	[Fact]
-	public override bool ActionTest()
+	public override void ActionTest()
 	{
 		Assert.Throws<ArgumentNullException>(() => Sync.ReadUpgradeable(default(Action)!));
 
@@ -47,14 +50,14 @@ public class ReadUpgradableTests : ReaderWriterLockSlimTestBase
 		Sync.ReadUpgradeable(() =>
 		{
 			Sync.IsUpgradeableReadLockHeld.Should().BeTrue();
-			ok = WriteTests.ActionTest();
+			WriteTests.ActionTest();
+			ok = true;
 		});
 		ok.Should().BeTrue();
-		return ok;
 	}
 
 	[Fact]
-	public bool ActionSyncTest()
+	public void ActionSyncTest()
 	{
 		Assert.Throws<ArgumentNullException>(() => Sync.ReadUpgradeable(default(Action<ReaderWriterLockSlim>)!));
 
@@ -62,14 +65,14 @@ public class ReadUpgradableTests : ReaderWriterLockSlimTestBase
 		Sync.ReadUpgradeable(_ =>
 		{
 			Sync.IsUpgradeableReadLockHeld.Should().BeTrue();
-			ok = WriteTests.ActionTest();
+			WriteTests.ActionTest();
+			ok = true;
 		});
 		ok.Should().BeTrue();
-		return ok;
 	}
 
 	[Fact]
-	public override bool TryActionTest()
+	public override void TryActionTest()
 	{
 		Assert.Throws<ArgumentNullException>(() => Sync.TryReadUpgradable(1000, default(Action)!));
 
@@ -81,11 +84,10 @@ public class ReadUpgradableTests : ReaderWriterLockSlimTestBase
 		});
 		held.Should().BeTrue();
 		ok.Should().BeTrue();
-		return held && ok;
 	}
 
 	[Fact]
-	public bool TryActionSyncTest()
+	public void TryActionSyncTest()
 	{
 		Assert.Throws<ArgumentNullException>(() => Sync.TryReadUpgradable(1000, default(Action<ReaderWriterLockSlim>)!));
 
@@ -97,7 +99,6 @@ public class ReadUpgradableTests : ReaderWriterLockSlimTestBase
 		});
 		held.Should().BeTrue();
 		ok.Should().BeTrue();
-		return held && ok;
 	}
 
 	protected override void ActionTimeoutCore()
@@ -122,35 +123,35 @@ public class ReadUpgradableTests : ReaderWriterLockSlimTestBase
 	}
 
 	[Fact]
-	public override bool ValueTest()
+	public override void ValueTest()
 	{
 		Assert.Throws<ArgumentNullException>(() => Sync.ReadUpgradeable(default(Func<bool>)!));
 
 		var ok = Sync.ReadUpgradeable(() =>
 		{
 			Sync.IsUpgradeableReadLockHeld.Should().BeTrue();
-			return WriteTests.ValueTest();
+			WriteTests.ActionTest();
+			return true;
 		});
 		ok.Should().BeTrue();
-		return ok;
 	}
 
 	[Fact]
-	public bool ValueSyncTest()
+	public void ValueSyncTest()
 	{
 		Assert.Throws<ArgumentNullException>(() => Sync.ReadUpgradeable(default(Func<ReaderWriterLockSlim, bool>)!));
 
 		var ok = Sync.ReadUpgradeable(_ =>
 		{
 			Sync.IsUpgradeableReadLockHeld.Should().BeTrue();
-			return WriteTests.ValueTest();
+			WriteTests.ActionTest();
+			return true;
 		});
 		ok.Should().BeTrue();
-		return ok;
 	}
 
 	[Fact]
-	public override bool TryValueTest()
+	public override void TryValueTest()
 	{
 		Assert.Throws<ArgumentNullException>(() => Sync.TryReadUpgradable(1000, out _, default(Func<bool>)!));
 
@@ -163,11 +164,10 @@ public class ReadUpgradableTests : ReaderWriterLockSlimTestBase
 		});
 		held.Should().BeTrue();
 		ok.Should().BeTrue();
-		return ok && held;
 	}
 
 	[Fact]
-	public bool TryValueSyncTest()
+	public void TryValueSyncTest()
 	{
 		Assert.Throws<ArgumentNullException>(() => Sync.TryReadUpgradable(1000, out _, default(Func<ReaderWriterLockSlim, bool>)!));
 
@@ -180,6 +180,5 @@ public class ReadUpgradableTests : ReaderWriterLockSlimTestBase
 		});
 		held.Should().BeTrue();
 		ok.Should().BeTrue();
-		return ok && held;
 	}
 }

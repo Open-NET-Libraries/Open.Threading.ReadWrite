@@ -3,12 +3,9 @@ using FluentAssertions;
 
 namespace Open.Threading.ReadWrite.Tests;
 
-public class WriteTests : ReaderWriterLockSlimTestBase
+public class WriteTests(ReaderWriterLockSlim? sync = null)
+	: ReaderWriterLockSlimTestBase(sync ?? new())
 {
-	public WriteTests(ReaderWriterLockSlim? sync = null) : base(sync ?? new())
-	{
-	}
-
 	protected override LockType LockType => LockType.Write;
 
 	[Fact]
@@ -28,11 +25,16 @@ public class WriteTests : ReaderWriterLockSlimTestBase
 		using var writeLock = Sync.WriteLock();
 		writeLock.LockHeld.Should().BeTrue();
 		Sync.IsWriteLockHeld.Should().BeTrue();
-		Task.Run(() => Assert.Throws<TimeoutException>(() => Sync.EnterWriteLock(1))).Wait();
+
+		// Avoid's recursion.
+		Task.Factory.StartNew(
+			() => Assert.Throws<TimeoutException>(() => Sync.EnterWriteLock(1)),
+			TaskCreationOptions.LongRunning)
+			.Wait();
 	}
 
 	[Fact]
-	public override bool ActionTest()
+	public override void ActionTest()
 	{
 		Assert.Throws<ArgumentNullException>(() => Sync.Write(default!));
 
@@ -43,11 +45,10 @@ public class WriteTests : ReaderWriterLockSlimTestBase
 			ok = true;
 		});
 		ok.Should().BeTrue();
-		return ok;
 	}
 
 	[Fact]
-	public override bool TryActionTest()
+	public override void TryActionTest()
 	{
 		Assert.Throws<ArgumentNullException>(() => Sync.TryWrite(1000, default!));
 
@@ -58,7 +59,6 @@ public class WriteTests : ReaderWriterLockSlimTestBase
 			ok = true;
 		}).Should().BeTrue();
 		ok.Should().BeTrue();
-		return ok;
 	}
 
 	protected override void ActionTimeoutCore()
@@ -74,7 +74,7 @@ public class WriteTests : ReaderWriterLockSlimTestBase
 	}
 
 	[Fact]
-	public override bool ValueTest()
+	public override void ValueTest()
 	{
 		Assert.Throws<ArgumentNullException>(() => Sync.Write(default(Func<bool>)!));
 
@@ -84,11 +84,10 @@ public class WriteTests : ReaderWriterLockSlimTestBase
 			return true;
 		});
 		ok.Should().BeTrue();
-		return ok;
 	}
 
 	[Fact]
-	public override bool TryValueTest()
+	public override void TryValueTest()
 	{
 		Assert.Throws<ArgumentNullException>(() => Sync.TryWrite(1000, out _, default(Func<bool>)!));
 
@@ -100,7 +99,6 @@ public class WriteTests : ReaderWriterLockSlimTestBase
 			return true;
 		}).Should().BeTrue();
 		ok.Should().BeTrue();
-		return ok;
 	}
 
 	[Fact]
@@ -330,10 +328,14 @@ public class WriteTests : ReaderWriterLockSlimTestBase
 	public void TryConditionalTest()
 	{
 		bool ran = false;
-		Assert.Throws<ArgumentNullException>(() => Sync.TryWriteConditional(1000, () => false, default!));
-		Assert.Throws<ArgumentNullException>(() => Sync.TryWriteConditional(1000, _ => false, default!));
-		Assert.Throws<ArgumentNullException>(() => Sync.TryWriteConditional(1000, default(Func<bool>)!, () => { }));
-		Assert.Throws<ArgumentNullException>(() => Sync.TryWriteConditional(1000, default(Func<bool, bool>)!, () => { }));
+		Assert.Throws<ArgumentNullException>(
+			() => Sync.TryWriteConditional(1000, () => false, default!));
+		Assert.Throws<ArgumentNullException>(
+			() => Sync.TryWriteConditional(1000, _ => false, default!));
+		Assert.Throws<ArgumentNullException>(
+			() => Sync.TryWriteConditional(1000, default(Func<bool>)!, () => { }));
+		Assert.Throws<ArgumentNullException>(
+			() => Sync.TryWriteConditional(1000, default(Func<bool, bool>)!, () => { }));
 
 		ran.Should().BeFalse();
 
