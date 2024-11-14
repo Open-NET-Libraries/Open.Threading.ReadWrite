@@ -69,7 +69,7 @@ public class ReadWriteHelper<TContext> : DeferredCleanupBase
 		object context,
 #if NETSTANDARD2_0
 #else
-		[System.Diagnostics.CodeAnalysis.MaybeNullWhen(false)]
+		[MaybeNullWhen(false)]
 #endif
 		out ReaderWriterLockTracker tracker,
 		out LockDisposeHandler handler,
@@ -162,8 +162,9 @@ public class ReadWriteHelper<TContext> : DeferredCleanupBase
 	}
 
 #if DEBUG
-	void Debug_TrackerDisposedWhileInUse(object sender, EventArgs e)
+	void Debug_TrackerDisposedWhileInUse(object? sender, EventArgs e)
 	{
+		Debug.Assert(sender is not null);
 		var tracker = (ReaderWriterLockTracker)sender;
 		if (Locks.Select(kvp => kvp.Value).Contains(tracker))
 			Debug.Fail("Attempting to dispose a tracker that is in use.");
