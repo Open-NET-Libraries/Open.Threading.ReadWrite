@@ -28,5 +28,12 @@ public enum LockType : byte
 	/// <summary>
 	/// Monitor lock.
 	/// </summary>
-	Monitor
+	Monitor,
+
+#if NET9_0_OR_GREATER
+	/// <summary>
+	/// System.Threading.Lock lock.
+	/// </summary>
+	Lock,
+#endif
 }

@@ -6,6 +6,11 @@ namespace Open.Threading;
 class ReaderWriterLockTracker : DisposableBase
 {
 	readonly HashSet<object> _registry = [];
+#if NET9_0_OR_GREATER
+	readonly System.Threading.Lock _lock = new();
+#else
+	readonly object _lock = new();
+#endif
 
 	public ReaderWriterLockSlim? Lock;
 
@@ -18,7 +23,7 @@ class ReaderWriterLockTracker : DisposableBase
 	public ReaderWriterLockSlim? Reserve(object context)
 	{
 		Debug.Assert(context is not null);
-		lock (_registry)
+		lock (_lock)
 		{
 			var reserved = Lock;
 			if (reserved is null || WasDisposed) return null;
@@ -56,7 +61,7 @@ class ReaderWriterLockTracker : DisposableBase
 	public void Clear(object context)
 	{
 		Debug.Assert(context is not null);
-		lock (_registry)
+		lock (_lock)
 		{
 			_registry.Remove(context!);
 		}
@@ -66,7 +71,7 @@ class ReaderWriterLockTracker : DisposableBase
 	{
 		get
 		{
-			lock (_registry)
+			lock (_lock)
 			{
 				return _registry.Count == 0;
 			}
@@ -75,7 +80,7 @@ class ReaderWriterLockTracker : DisposableBase
 
 	protected override void OnDispose()
 	{
-		lock (_registry)
+		lock (_lock)
 		{
 			var count = _registry.Count;
 			Debug.WriteLineIf(count != 0, $"Disposing a ReaderWriterLockTracker with {count} contexts still registered.");

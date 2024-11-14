@@ -12,6 +12,7 @@ namespace Open.Threading;
 /// This essentially has its own garbage collector to prevent building up memory/references to unused locks.
 /// </summary>
 public class ReadWriteHelper<TContext> : DeferredCleanupBase
+	where TContext : notnull
 {
 	#region Construction
 	readonly OptimisticArrayObjectPool<object> ContextPool;
@@ -66,7 +67,8 @@ public class ReadWriteHelper<TContext> : DeferredCleanupBase
 		TContext key,
 		LockType type,
 		object context,
-#if NETSTANDARD2_1_OR_GREATER
+#if NETSTANDARD2_0
+#else
 		[System.Diagnostics.CodeAnalysis.MaybeNullWhen(false)]
 #endif
 		out ReaderWriterLockTracker tracker,

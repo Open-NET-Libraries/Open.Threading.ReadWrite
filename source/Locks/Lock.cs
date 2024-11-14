@@ -8,18 +8,20 @@ namespace Open.Threading;
 public readonly struct Lock : ILock
 {
 	private readonly object _target;
+#if NET9_0_OR_GREATER
+	private readonly System.Threading.Lock? _targetLock;
+#endif
 
 	/// <inheritdoc cref="ILock.LockHeld" />
 	public readonly bool LockHeld;
 	bool ILock.LockHeld => LockHeld;
 
 	/// <inheritdoc />
-	public LockType LockType
-		=> LockType.Monitor;
+	public LockType LockType { get; }
 
 	/// <inheritdoc />
 	public LockType LockTypeHeld
-		=> LockHeld ? LockType.Monitor : LockType.None;
+		=> LockHeld ? LockType : LockType.None;
 
 	/// <summary>Constructs a <see cref="Lock"/> for use with a <see langword="using"/> block.</summary>
 	/// <param name="target">The object to acquire an exclusive lock for.</param>
@@ -37,6 +39,24 @@ public readonly struct Lock : ILock
 		LockTimeout timeout = default,
 		bool throwIfTimeout = true)
 	{
+#if NET9_0_OR_GREATER
+		if (target is System.Threading.Lock targetLock)
+		{
+			_target = null!;
+			_targetLock = targetLock;
+			LockType = LockType.Lock;
+			if (timeout.IsFinite)
+			{
+				LockHeld = targetLock.TryEnter(timeout);
+				if (throwIfTimeout && !LockHeld) timeout.Throw(LockType.Lock);
+				return;
+			}
+			targetLock.Enter();
+			LockHeld = true;
+			return;
+		}
+#endif
+
 		_target = AssertSyncObject(target);
 		if (timeout.IsFinite)
 		{
@@ -48,6 +68,28 @@ public readonly struct Lock : ILock
 		Monitor.Enter(target);
 		LockHeld = true;
 	}
+
+#if NET9_0_OR_GREATER
+	/// <inheritdoc cref="Lock(object, LockTimeout, bool)"/>
+	public Lock(
+		System.Threading.Lock target,
+		LockTimeout timeout = default,
+		bool throwIfTimeout = true)
+	{
+		_target = null!;
+		_targetLock = target ?? throw new ArgumentNullException(nameof(target));
+		LockType = LockType.Lock;
+		if (timeout.IsFinite)
+		{
+			LockHeld = target.TryEnter(timeout);
+			if (throwIfTimeout && !LockHeld) timeout.Throw(LockType.Lock);
+			return;
+		}
+
+		target.Enter();
+		LockHeld = true;
+	}
+#endif
 
 	/// <summary>
 	/// Returns <see langword="true"/> if <paramref name="syncObject"/> is valid for locking.
@@ -64,7 +106,8 @@ public readonly struct Lock : ILock
 	/// </summary>
 	/// <exception cref="ArgumentNullException">If <paramref name="syncObject"/> is null.</exception>
 	/// <exception cref="ArgumentException">If <paramref name="syncObject"/> is not valid for locking.</exception>
-#if NETSTANDARD2_1_OR_GREATER
+#if NETSTANDARD2_0
+#else
 	[return: NotNull]
 #endif
 	public static object AssertSyncObject(object syncObject)
@@ -79,16 +122,25 @@ public readonly struct Lock : ILock
 
 	/// <inheritdoc cref="ILock.LockHeld"/>
 	[ExcludeFromCodeCoverage]
-	public static implicit operator bool(Lock monitor) => monitor.LockHeld;
+	public static implicit operator bool(Lock @lock) => @lock.LockHeld;
 
 	/// <inheritdoc cref="ILock.LockTypeHeld"/>
 	[ExcludeFromCodeCoverage]
-	public static implicit operator LockType(Lock monitor) => monitor.LockTypeHeld;
+	public static implicit operator LockType(Lock @lock) => @lock.LockTypeHeld;
 
 	/// <summary>Releases the lock if one was acquired.</summary>
 	/// <remarks>Should only be called once.  Calling more than once may produce unexpected results.</remarks>
 	public void Dispose()
 	{
-		if(LockHeld) Monitor.Exit(_target);
+#if NET9_0_OR_GREATER
+		if (_targetLock is not null)
+		{
+			if (LockHeld) _targetLock.Exit();
+			return;
+		}
+
+		System.Diagnostics.Debug.Assert(_target is not null);
+#endif
+		if (LockHeld) Monitor.Exit(_target);
 	}
 }
