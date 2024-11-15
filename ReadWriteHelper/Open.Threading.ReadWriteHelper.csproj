@@ -20,7 +20,7 @@ Part of the "Open" set of libraries.
 		<PackageProjectUrl>https://github.com/Open-NET-Libraries/Open.Threading.ReadWrite/</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Open-NET-Libraries/Open.Threading.ReadWrite/</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
-		<Version>3.0.1</Version>
+		<Version>3.0.2</Version>
 		<PackageReleaseNotes></PackageReleaseNotes>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
@@ -35,7 +35,7 @@ Part of the "Open" set of libraries.
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.*" PrivateAssets="All" />
-		<PackageReference Include="Open.Disposable.ObjectPools" Version="3.*" />
+		<PackageReference Include="Open.Disposable.ObjectPools" Version="3.0.1" />
 	</ItemGroup>
 
 	<!-- 👇 disable the nullable warnings when compiling for .NET Standard 2.0 -->
